@@ -1,0 +1,154 @@
+<section class="cart-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Cart</h1>
+      <p class="page-subtitle">Review your selected products before checkout.</p>
+    </div>
+    <a routerLink="/products" class="btn btn-secondary">← Continue Shopping</a>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading cart...</p>
+  </div>
+
+  <div class="error-message" *ngIf="!loading && errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="success-message" *ngIf="actionMessage">
+    {{ actionMessage }}
+  </div>
+
+  <div class="error-message" *ngIf="actionErrorMessage">
+    {{ actionErrorMessage }}
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !errorMessage && !hasItems">
+    <img class="empty-illustration" src="assets/illustrations/empty-cart.jpg" alt="Your cart is empty" title="Your cart is empty" />
+    <h2>Your cart is empty</h2>
+    <p class="muted">Add products from the catalog to start a checkout.</p>
+    <a routerLink="/products" class="btn btn-primary empty-cta">🛍️ Browse products</a>
+  </div>
+
+  <div class="cart-layout" *ngIf="!loading && !errorMessage && hasItems">
+    <!-- Items List -->
+    <div class="items-list">
+      <article class="cart-item card" *ngFor="let item of cartItems">
+        <div class="item-main">
+          <h2 class="item-title">{{ getProductName(item) }}</h2>
+          <div class="item-meta muted">
+            <span *ngIf="item.productId">Product #{{ item.productId }}</span>
+            <span *ngIf="item.variantId"> • Variant #{{ item.variantId }}</span>
+          </div>
+        </div>
+
+        <div class="item-price">
+          <span class="muted label">Unit Price</span>
+          <strong class="price">
+            {{ getUnitPrice(item) === null ? 'N/A' : (getUnitPrice(item) | formatCurrency:'1.2-2') }}
+          </strong>
+        </div>
+
+        <div class="quantity-control">
+          <label class="muted label">Quantity</label>
+          <input
+            type="number"
+            class="input-qty"
+            min="1"
+            step="1"
+            [(ngModel)]="itemQuantities[item.id]"
+          />
+        </div>
+
+        <div class="item-total">
+          <span class="muted label">Subtotal</span>
+          <strong class="price">
+            {{ getLineTotal(item) === null ? 'N/A' : (getLineTotal(item) | formatCurrency:'1.2-2') }}
+          </strong>
+        </div>
+
+        <div class="item-actions">
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            (click)="updateItemQuantity(item)"
+            [disabled]="updatingItemId !== null || removingItemId !== null"
+          >
+            ⟳ {{ updatingItemId === item.id ? 'Updating...' : 'Update' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            (click)="removeItem(item)"
+            [disabled]="updatingItemId !== null || removingItemId !== null"
+          >
+            ✕ {{ removingItemId === item.id ? 'Removing...' : 'Remove' }}
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <!-- Summary Card -->
+    <aside class="cart-summary card">
+      <h2>Order Summary</h2>
+
+      <div class="summary-details">
+        <div class="summary-row">
+          <span class="muted">Subtotal</span>
+          <strong>{{ cart?.sousTotal ?? 0 | formatCurrency:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-row">
+          <span class="muted">Discount</span>
+          <strong class="text-success">{{ cart?.remise ?? 0 | formatCurrency:'1.2-2' }}</strong>
+        </div>
+        <div class="summary-row">
+          <span class="muted">Shipping</span>
+          <strong>{{ cart?.fraisLivraison ?? 0 | formatCurrency:'1.2-2' }}</strong>
+        </div>
+      </div>
+      
+      <div class="summary-row total-row">
+        <span>Total</span>
+        <strong class="total-price">{{ cart?.totalTTC ?? 0 | formatCurrency:'1.2-2' }}</strong>
+      </div>
+
+  <div class="order-summary-divider"></div>
+      <div class="coupon-section">
+        <div *ngIf="cart?.couponCode" class="applied-coupon badge status-success">
+          Applied coupon: {{ cart?.couponCode }}
+        </div>
+
+        <div class="coupon-input-group">
+          <label for="coupon-code" class="muted label">Coupon code</label>
+          <div class="coupon-form">
+            <input
+              id="coupon-code"
+              class="input-control"
+              name="couponCode"
+              type="text"
+              [(ngModel)]="couponCode"
+              placeholder="e.g. WELCOME10"
+            />
+          </div>
+        </div>
+
+        <div class="coupon-actions">
+          <button type="button" class="btn btn-secondary" (click)="applyCoupon()" [disabled]="applyingCoupon || removingCoupon">
+            ✓ {{ applyingCoupon ? 'Applying...' : 'Apply' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            (click)="removeCoupon()"
+            *ngIf="cart?.couponCode"
+            [disabled]="applyingCoupon || removingCoupon"
+          >
+            ✕ {{ removingCoupon ? 'Removing...' : 'Remove' }}
+          </button>
+        </div>
+      </div>
+
+      <a class="btn btn-primary btn-block checkout-link" routerLink="/addresses">💳 Proceed to Checkout</a>
+    </aside>
+  </div>
+</section>

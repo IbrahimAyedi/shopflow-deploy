@@ -1,0 +1,305 @@
+.admin-orders-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  --admin-accent: #1e293b;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--admin-accent);
+  padding-bottom: 1rem;
+}
+
+.page-title {
+  margin: 0 0 0.25rem 0;
+  color: var(--admin-accent);
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+/* ── Orders list ──────────────────────────────────── */
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.order-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── Card header ─────────────────────────────────── */
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background-color: var(--surface-soft);
+  border-bottom: 1px solid var(--border);
+}
+
+.order-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.order-number {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--admin-accent);
+}
+
+.order-date {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+/* ── Card body ───────────────────────────────────── */
+
+.order-card-body {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 0;
+}
+
+.order-details {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-right: 1px solid var(--border);
+}
+
+/* ── Detail rows ─────────────────────────────────── */
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.detail-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 72px;
+}
+
+.detail-value {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.detail-price {
+  font-weight: 700;
+  color: var(--admin-accent);
+}
+
+.detail-empty {
+  font-style: italic;
+  font-size: 0.875rem;
+}
+
+/* ── Items section ───────────────────────────────── */
+
+.items-section {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border);
+}
+
+.items-title {
+  margin: 0 0 0.625rem 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 1fr auto 90px;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.375rem 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.875rem;
+}
+
+.item-row:last-child {
+  border-bottom: none;
+}
+
+.item-name {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.item-qty {
+  font-size: 0.8125rem;
+}
+
+.item-price {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ── Status control ──────────────────────────────── */
+
+.order-status-control {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  justify-content: flex-start;
+  background-color: #f8fafc;
+}
+
+.status-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-accent);
+}
+
+.status-select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text);
+  background-color: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px rgba(30, 41, 59, 0.1);
+}
+
+/* ── Status display ──────────────────────────────── */
+
+.status-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.status-display .status-label {
+  margin: 0;
+}
+
+.status-display .badge {
+  display: inline-block;
+  width: fit-content;
+}
+
+/* ── Status actions ──────────────────────────────── */
+
+.status-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.status-action-btn {
+  padding: 0.625rem 1rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s;
+  cursor: pointer;
+  border: 1px solid transparent;
+  width: 100%;
+  text-align: center;
+}
+
+.status-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.status-action-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.destructive-action {
+  color: white;
+}
+
+/* ── Terminal status note ────────────────────────– */
+
+.terminal-status-note {
+  padding: 0.75rem;
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+}
+
+.note-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #166534;
+  font-weight: 500;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .order-card-body {
+    grid-template-columns: 1fr;
+  }
+
+  .order-details {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .order-status-control {
+    background-color: transparent;
+  }
+}
+
+@media (max-width: 480px) {
+  .order-card-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}

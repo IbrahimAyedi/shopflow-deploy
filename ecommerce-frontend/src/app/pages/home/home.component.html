@@ -1,0 +1,120 @@
+<section class="home-page">
+
+  <!-- ── Video Hero ─────────────────────────────────── -->
+  <div class="hero">
+    <video class="hero-video" autoplay muted loop playsinline>
+      <source src="assets/videos/home-hero-background.mp4" type="video/mp4" />
+    </video>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <span class="hero-badge">🏷️ Coupon: WELCOME10</span>
+      <h1 class="hero-title">Shop smarter<br />with ShopFlow</h1>
+      <p class="hero-subtitle">
+        A premium demo marketplace for electronics,<br />curated by sellers you can trust.
+      </p>
+      <div class="hero-actions">
+        <a routerLink="/products" class="btn btn-hero-primary">Browse Products</a>
+        <a routerLink="/profile" class="btn btn-hero-secondary">View Profile</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Trust Cards ────────────────────────────────── -->
+  <div class="trust-features">
+    <div class="trust-card card">
+      <div class="trust-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <h3>Secure checkout</h3>
+      <p class="muted">100% safe and encrypted</p>
+    </div>
+    <div class="trust-card card">
+      <div class="trust-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+        </svg>
+      </div>
+      <h3>Fast delivery</h3>
+      <p class="muted">Get it when you need it</p>
+    </div>
+    <div class="trust-card card">
+      <div class="trust-icon-wrapper">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="1 4 1 10 7 10"/>
+          <path d="M3.51 15a9 9 0 1 0 .49-3.1"/>
+        </svg>
+      </div>
+      <h3>Easy returns</h3>
+      <p class="muted">No questions asked</p>
+    </div>
+  </div>
+
+  <!-- ── Featured Products Header ──────────────────── -->
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">Featured products</h2>
+      <p class="page-subtitle">Fresh picks from the demo catalogue.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="loadProducts()" [disabled]="loading">
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <!-- ── States ─────────────────────────────────────── -->
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading featured products...</p>
+  </div>
+
+  <div class="error-message" *ngIf="!loading && errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !errorMessage && !hasFeaturedProducts">
+    <p>No featured products found.</p>
+  </div>
+
+  <!-- ── Featured Grid ──────────────────────────────── -->
+  <div class="featured-grid" *ngIf="!loading && !errorMessage && hasFeaturedProducts">
+    <article class="product-card card" *ngFor="let product of featuredProducts">
+      <div class="product-image">
+        <img *ngIf="product.imageUrl; else noImage" [src]="resolveImageUrl(product.imageUrl)" [alt]="product.name || 'Product image'" [title]="product.name" />
+        <ng-template #noImage>
+          <span class="muted">No Image</span>
+        </ng-template>
+      </div>
+      <div class="product-info">
+        <h3>{{ product.name }}</h3>
+
+        <!-- Category badges -->
+        <div class="product-categories" *ngIf="product.categoryNames && product.categoryNames.length > 0">
+          <span class="category-badge" *ngFor="let catName of product.categoryNames">{{ catName }}</span>
+        </div>
+
+        <div class="price-row">
+          <p class="price" [class.has-promo]="product.prixPromo">{{ product.price | formatCurrency:'1.2-2' }}</p>
+          <p class="promo-price" *ngIf="product.prixPromo">{{ product.prixPromo | formatCurrency:'1.2-2' }}</p>
+        </div>
+        <div class="seller-line" *ngIf="product.sellerShopName || product.sellerName">
+          Sold by <strong>{{ product.sellerShopName || product.sellerName }}</strong>
+        </div>
+        <div class="product-meta">
+          <div class="stock-indicator">
+            <span class="stock-dot stock-in" *ngIf="product.quantity > 0"></span>
+            <span class="stock-dot stock-out" *ngIf="product.quantity === 0"></span>
+            <span class="stock-label">{{ product.quantity > 0 ? 'In Stock' : 'Out of Stock' }}</span>
+          </div>
+          <span class="rating-stars" *ngIf="product.note !== null && product.note !== undefined">
+            <ng-container *ngFor="let s of [1,2,3,4,5]">
+              <span [class]="s <= (product.note || 0) ? 'star-filled' : 'star-empty'">★</span>
+            </ng-container>
+            <span class="rating-num">{{ product.note }}</span>
+          </span>
+        </div>
+        <a [routerLink]="['/products', product.id]" class="btn btn-primary product-link">View details</a>
+      </div>
+    </article>
+  </div>
+
+</section>

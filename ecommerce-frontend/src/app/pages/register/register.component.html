@@ -1,0 +1,221 @@
+<div class="auth-split-page">
+
+  <!-- ── Illustration Panel ─────────────────────────── -->
+  <div class="auth-illustration-panel">
+    <div class="panel-inner">
+      <div class="panel-brand">
+        <span class="panel-logo">ShopFlow</span>
+        <span class="panel-tagline">Premium Marketplace</span>
+      </div>
+      <div class="panel-image-wrapper">
+        <img
+          class="panel-image"
+          src="assets/illustrations/register-illustration.jpg"
+          alt="Create your ShopFlow account"
+          title="Create your ShopFlow account"
+        />
+      </div>
+      <div class="panel-copy">
+        <h2>Create your customer account</h2>
+        <p>Start shopping with ShopFlow. Seller accounts are created by the platform administrator.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Form Side ──────────────────────────────────── -->
+  <div class="auth-form-side">
+    <form class="auth-card" #registerForm="ngForm" (ngSubmit)="onSubmit()">
+
+      <div class="auth-header">
+        <h1>Create customer account</h1>
+        <p class="auth-subtitle">Start shopping with ShopFlow.</p>
+      </div>
+
+      <div class="register-note">
+        <span>Seller accounts are approved by the platform administrator.</span>
+        <button type="button" class="seller-request-trigger" (click)="openSellerRequestModal()">
+          Request seller account
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label for="register-email">Email address</label>
+        <input
+          id="register-email"
+          name="email"
+          type="email"
+          required
+          [(ngModel)]="credentials.email"
+          autocomplete="email"
+          placeholder="you@example.com"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="register-password">Password</label>
+        <input
+          id="register-password"
+          name="password"
+          type="password"
+          required
+          [(ngModel)]="credentials.password"
+          autocomplete="new-password"
+          placeholder="••••••••"
+        />
+      </div>
+
+      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <button type="submit" [disabled]="registerForm.invalid || loading">
+        {{ loading ? 'Creating account...' : 'Create account' }}
+      </button>
+
+      <p class="auth-helper">Use a real email address. You can sign in immediately after registration.</p>
+
+      <p class="auth-link">
+        Already have an account? <a routerLink="/login">Sign in</a>
+      </p>
+
+    </form>
+  </div>
+
+</div>
+
+<div
+  class="seller-request-backdrop"
+  *ngIf="showSellerRequestModal"
+  (click)="onSellerRequestBackdropClick($event)"
+>
+  <div
+    class="seller-request-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="seller-request-title"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="seller-request-header">
+      <div>
+        <h2 id="seller-request-title">Request seller account</h2>
+        <p>Tell the admin about your shop. Customer registration stays separate.</p>
+      </div>
+      <button
+        type="button"
+        class="modal-close-btn"
+        aria-label="Close seller request modal"
+        (click)="closeSellerRequestModal()"
+        [disabled]="sellerRequestSubmitting"
+      >
+        ×
+      </button>
+    </div>
+
+    <p class="success-message" *ngIf="sellerRequestSuccessMessage">{{ sellerRequestSuccessMessage }}</p>
+    <p class="error" *ngIf="sellerRequestErrorMessage">{{ sellerRequestErrorMessage }}</p>
+
+    <form
+      class="seller-request-form"
+      #sellerRequestForm="ngForm"
+      (ngSubmit)="submitSellerRequest(sellerRequestForm)"
+      *ngIf="!sellerRequestSuccessMessage"
+    >
+      <div class="seller-request-grid">
+        <div class="form-group">
+          <label for="seller-request-full-name">Full name</label>
+          <input
+            id="seller-request-full-name"
+            name="sellerRequestFullName"
+            type="text"
+            required
+            [(ngModel)]="sellerRequestModel.fullName"
+            autocomplete="name"
+          />
+          <p class="field-error" *ngIf="sellerRequestForm.submitted && sellerRequestForm.controls['sellerRequestFullName']?.invalid">Full name is required.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="seller-request-email">Email</label>
+          <input
+            id="seller-request-email"
+            name="sellerRequestEmail"
+            type="email"
+            required
+            [(ngModel)]="sellerRequestModel.email"
+            autocomplete="email"
+          />
+          <p class="field-error" *ngIf="sellerRequestForm.submitted && sellerRequestForm.controls['sellerRequestEmail']?.invalid">Valid email is required.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="seller-request-phone">Phone</label>
+          <input
+            id="seller-request-phone"
+            name="sellerRequestPhone"
+            type="tel"
+            required
+            [(ngModel)]="sellerRequestModel.phone"
+            autocomplete="tel"
+          />
+          <p class="field-error" *ngIf="sellerRequestForm.submitted && sellerRequestForm.controls['sellerRequestPhone']?.invalid">Phone is required.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="seller-request-shop-name">Shop name</label>
+          <input
+            id="seller-request-shop-name"
+            name="sellerRequestShopName"
+            type="text"
+            required
+            [(ngModel)]="sellerRequestModel.shopName"
+            autocomplete="organization"
+          />
+          <p class="field-error" *ngIf="sellerRequestForm.submitted && sellerRequestForm.controls['sellerRequestShopName']?.invalid">Shop name is required.</p>
+        </div>
+
+        <div class="form-group form-group-full">
+          <label for="seller-request-shop-description">Shop description</label>
+          <textarea
+            id="seller-request-shop-description"
+            name="sellerRequestShopDescription"
+            rows="3"
+            [(ngModel)]="sellerRequestModel.shopDescription"
+          ></textarea>
+        </div>
+
+        <div class="form-group form-group-full">
+          <label for="seller-request-address">Address</label>
+          <textarea
+            id="seller-request-address"
+            name="sellerRequestAddress"
+            rows="2"
+            [(ngModel)]="sellerRequestModel.address"
+          ></textarea>
+        </div>
+
+        <div class="form-group form-group-full">
+          <label for="seller-request-message">Message</label>
+          <textarea
+            id="seller-request-message"
+            name="sellerRequestMessage"
+            rows="3"
+            [(ngModel)]="sellerRequestModel.message"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" (click)="closeSellerRequestModal(sellerRequestForm)" [disabled]="sellerRequestSubmitting">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="sellerRequestSubmitting">
+          {{ sellerRequestSubmitting ? 'Sending...' : 'Send request' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="modal-actions" *ngIf="sellerRequestSuccessMessage">
+      <button type="button" (click)="closeSellerRequestModal()">
+        Close
+      </button>
+    </div>
+  </div>
+</div>

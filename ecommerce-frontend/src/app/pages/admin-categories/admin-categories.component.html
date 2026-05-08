@@ -1,0 +1,247 @@
+<section class="admin-categories-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Manage Categories</h1>
+      <p class="page-subtitle">Organize the marketplace catalogue structure.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-secondary" (click)="loadCategories()" [disabled]="loading">
+        ⟳ {{ loading ? 'Loading...' : 'Refresh' }}
+      </button>
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()" [disabled]="loading || submitting">
+        ＋ Add Category
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading categories...</p>
+  </div>
+  <div class="error-message" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+  <div class="success-message" *ngIf="actionMessage">{{ actionMessage }}</div>
+  <div class="error-message" *ngIf="actionErrorMessage">{{ actionErrorMessage }}</div>
+
+  <div class="crud-layout" *ngIf="!loading && !errorMessage">
+    <div class="list-section card">
+      <div class="empty-state" *ngIf="!hasCategories">
+        <p class="muted">No categories found. Create one to get started.</p>
+      </div>
+
+      <div class="table-responsive" *ngIf="hasCategories">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Parent</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let category of categories">
+              <td>
+                <strong class="font-medium">{{ category.nom }}</strong>
+                <span class="muted" style="display:block; font-size: 0.75rem;">#{{ category.id }}</span>
+              </td>
+              <td class="muted">{{ category.description || '—' }}</td>
+              <td>
+                <span class="badge status-info" *ngIf="category.parentId">{{ getParentName(category.parentId) }}</span>
+                <span class="muted" *ngIf="!category.parentId">—</span>
+              </td>
+              <td>
+                <div class="row-actions">
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    (click)="editCategory(category)"
+                    [disabled]="submitting || deletingCategoryId !== null"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    (click)="requestDeleteCategory(category)"
+                    [disabled]="submitting || deletingCategoryId !== null"
+                  >
+                    🗑️ {{ deletingCategoryId === category.id ? '...' : 'Delete' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showCreateModal">
+    <div
+      class="modal-panel modal-panel-wide"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-category-title"
+    >
+      <form class="modal-form" #createCategoryForm="ngForm" (ngSubmit)="submitCreateModal(createCategoryForm)">
+        <div class="modal-header">
+          <div>
+            <h2 id="create-category-title">Create category</h2>
+            <p class="modal-subtitle">Add a category to organize products in the catalogue.</p>
+          </div>
+        </div>
+
+        <div class="error-message" *ngIf="modalErrorMessage">{{ modalErrorMessage }}</div>
+
+        <div class="form-group">
+          <label for="create-category-nom" class="label">Name</label>
+          <input
+            id="create-category-nom"
+            name="nom"
+            class="input-control"
+            required
+            maxlength="120"
+            [(ngModel)]="createModel.nom"
+          />
+          <p class="field-error" *ngIf="createCategoryForm.submitted && createCategoryForm.controls['nom']?.invalid">
+            Name is required.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="create-category-description" class="label">Description</label>
+          <textarea
+            id="create-category-description"
+            name="description"
+            class="input-control"
+            rows="4"
+            [(ngModel)]="createModel.description"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="create-category-parent" class="label">Parent Category</label>
+          <select id="create-category-parent" name="parentId" class="input-control" [(ngModel)]="createModel.parentId">
+            <option [ngValue]="null">None (Root category)</option>
+            <option *ngFor="let category of parentOptions" [ngValue]="category.id">
+              {{ category.nom }}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeCreateModal(createCategoryForm)"
+            [disabled]="submitting"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            {{ submitting ? 'Saving...' : 'Create category' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="isEditing">
+    <div
+      class="modal-panel modal-panel-wide"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-category-title"
+    >
+      <form class="modal-form" #editCategoryForm="ngForm" (ngSubmit)="saveEdit(editCategoryForm)">
+        <div class="modal-header">
+          <div>
+            <h2 id="edit-category-title">Edit category</h2>
+            <p class="modal-subtitle">Update {{ editingCategoryName }} without changing the table until you save.</p>
+          </div>
+        </div>
+
+        <div class="error-message" *ngIf="modalErrorMessage">{{ modalErrorMessage }}</div>
+
+        <div class="form-group">
+          <label for="edit-category-nom" class="label">Name</label>
+          <input
+            id="edit-category-nom"
+            name="nom"
+            class="input-control"
+            required
+            maxlength="120"
+            [(ngModel)]="editModel.nom"
+          />
+          <p class="field-error" *ngIf="editCategoryForm.submitted && editCategoryForm.controls['nom']?.invalid">
+            Name is required.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-category-description" class="label">Description</label>
+          <textarea
+            id="edit-category-description"
+            name="description"
+            class="input-control"
+            rows="4"
+            [(ngModel)]="editModel.description"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-category-parent" class="label">Parent Category</label>
+          <select id="edit-category-parent" name="parentId" class="input-control" [(ngModel)]="editModel.parentId">
+            <option [ngValue]="null">None (Root category)</option>
+            <option *ngFor="let category of parentOptions" [ngValue]="category.id">
+              {{ category.nom }}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelEdit(editCategoryForm)" [disabled]="submitting">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            {{ submitting ? 'Saving...' : 'Save changes' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="categoryPendingDelete as categoryToDelete">
+    <div
+      class="modal-panel modal-panel-small"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-category-title"
+    >
+      <div class="modal-header">
+        <div>
+          <h2 id="delete-category-title">Delete category</h2>
+          <p class="modal-subtitle">This will remove {{ categoryToDelete.nom }} from the catalogue structure.</p>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="cancelDeleteCategory()"
+          [disabled]="deletingCategoryId !== null"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="confirmDeleteCategory()"
+          [disabled]="deletingCategoryId !== null"
+        >
+          {{ deletingCategoryId !== null ? 'Deleting...' : 'Delete category' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,136 @@
+<section class="admin-seller-requests-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Seller Requests</h1>
+      <p class="page-subtitle">Review seller account applications submitted from the register page.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-secondary" (click)="loadRequests()" [disabled]="loading">
+        {{ loading ? 'Loading...' : 'Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading seller requests...</p>
+  </div>
+
+  <div class="error-message" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+  <div class="success-message" *ngIf="actionMessage">{{ actionMessage }}</div>
+  <div class="approval-credentials-card" *ngIf="approvedCredentials">
+    <p class="credentials-title">Seller login credentials</p>
+    <div class="credentials-row">
+      <span>Email:</span>
+      <strong>{{ approvedCredentials.email }}</strong>
+    </div>
+    <div class="credentials-row">
+      <span>Temporary password:</span>
+      <strong>{{ approvedCredentials.temporaryPassword }}</strong>
+    </div>
+    <p class="credentials-note">Ask the seller to change this password after first login.</p>
+  </div>
+  <div class="error-message" *ngIf="actionErrorMessage">{{ actionErrorMessage }}</div>
+
+  <div class="empty-state" *ngIf="!loading && !errorMessage && !hasRequests">
+    <p class="muted">No seller requests found.</p>
+  </div>
+
+  <div class="requests-section" *ngIf="!loading && !errorMessage && pendingRequests.length > 0">
+    <div class="section-heading">
+      <h2>Pending</h2>
+      <span class="count-pill">{{ pendingRequests.length }}</span>
+    </div>
+
+    <div class="request-grid">
+      <article class="request-card" *ngFor="let request of pendingRequests; trackBy: trackByRequestId">
+        <div class="request-card-header">
+          <div>
+            <h3>{{ request.shopName }}</h3>
+            <p>{{ request.fullName }} · {{ request.email }}</p>
+          </div>
+          <span class="badge" [ngClass]="getStatusClass(request.status)">{{ request.status }}</span>
+        </div>
+
+        <dl class="request-details">
+          <div>
+            <dt>Phone</dt>
+            <dd>{{ request.phone }}</dd>
+          </div>
+          <div>
+            <dt>Created</dt>
+            <dd>{{ request.createdAt | date:'medium' }}</dd>
+          </div>
+          <div *ngIf="request.address">
+            <dt>Address</dt>
+            <dd>{{ request.address }}</dd>
+          </div>
+          <div *ngIf="request.shopDescription">
+            <dt>Description</dt>
+            <dd>{{ request.shopDescription }}</dd>
+          </div>
+          <div *ngIf="request.message">
+            <dt>Message</dt>
+            <dd>{{ request.message }}</dd>
+          </div>
+        </dl>
+
+        <div class="request-actions">
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            (click)="approveRequest(request)"
+            [disabled]="processingId === request.id"
+          >
+            {{ processingId === request.id ? 'Working...' : 'Accept' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger btn-sm"
+            (click)="rejectRequest(request)"
+            [disabled]="processingId === request.id"
+          >
+            Reject
+          </button>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <div class="requests-section" *ngIf="!loading && !errorMessage && reviewedRequests.length > 0">
+    <div class="section-heading">
+      <h2>Reviewed</h2>
+      <span class="count-pill">{{ reviewedRequests.length }}</span>
+    </div>
+
+    <div class="card requests-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Shop</th>
+              <th>Applicant</th>
+              <th>Status</th>
+              <th>Reviewed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let request of reviewedRequests; trackBy: trackByRequestId">
+              <td>
+                <strong>{{ request.shopName }}</strong>
+                <span class="muted block">{{ request.message || 'No message' }}</span>
+              </td>
+              <td>
+                <span>{{ request.fullName }}</span>
+                <span class="muted block">{{ request.email }}</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusClass(request.status)">{{ request.status }}</span>
+              </td>
+              <td>{{ request.reviewedAt | date:'medium' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

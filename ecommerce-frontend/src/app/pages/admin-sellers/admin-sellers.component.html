@@ -1,0 +1,196 @@
+<section class="admin-sellers-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Manage Sellers</h1>
+      <p class="page-subtitle">Create and manage seller accounts for the marketplace.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-secondary" (click)="loadSellers()" [disabled]="loading">
+        {{ loading ? 'Loading...' : 'Refresh' }}
+      </button>
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()" [disabled]="loading || submitting">
+        + Create Seller
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading sellers...</p>
+  </div>
+  <div class="error-message" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+  <div class="success-message" *ngIf="actionMessage">{{ actionMessage }}</div>
+  <div class="error-message" *ngIf="actionErrorMessage">{{ actionErrorMessage }}</div>
+
+  <div class="card sellers-card" *ngIf="!loading && !errorMessage">
+    <div class="empty-state" *ngIf="!hasSellers">
+      <p class="muted">No seller accounts found. Create the first seller to get started.</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="hasSellers">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Seller</th>
+            <th>Email</th>
+            <th>Contact</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let seller of sellers">
+            <td>
+              <div class="seller-cell">
+                <div class="seller-logo-preview">
+                  <img *ngIf="seller.logoUrl; else logoFallback" [src]="resolveLogoUrl(seller.logoUrl)" [alt]="seller.shopName || seller.fullName || seller.email" />
+                  <ng-template #logoFallback>
+                    <div class="logo-placeholder">{{ getLogoInitials(seller.shopName || seller.fullName || seller.email) }}</div>
+                  </ng-template>
+                </div>
+                <div class="seller-meta">
+                  <strong>{{ seller.shopName || 'Seller account' }}</strong>
+                  <span class="muted">{{ seller.fullName || 'No full name provided' }}</span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="font-medium">{{ seller.email }}</span>
+            </td>
+            <td>
+              <div class="seller-contact">
+                <span>{{ seller.phone || '—' }}</span>
+                <span class="muted seller-address">{{ seller.address || 'No address provided' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="seller.active ? 'status-success' : 'status-danger'">
+                {{ seller.active ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="table-actions">
+              <button class="btn btn-danger btn-sm" (click)="toggleSellerActive(seller)">
+                {{ seller.active ? 'Deactivate' : 'Reactivate' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showCreateModal">
+    <div
+      class="modal-panel modal-panel-wide"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-seller-title"
+    >
+      <form class="modal-form" #createSellerForm="ngForm" (ngSubmit)="submitCreateModal(createSellerForm)">
+        <div class="modal-header">
+          <div>
+            <h2 id="create-seller-title">Create seller</h2>
+            <p class="modal-subtitle">Create a seller account and storefront profile in one step.</p>
+          </div>
+        </div>
+
+        <div class="error-message" *ngIf="modalErrorMessage">{{ modalErrorMessage }}</div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="seller-email" class="label">Email</label>
+            <input id="seller-email" name="email" class="input-control" type="email" required [(ngModel)]="createModel.email" autocomplete="email" />
+            <p class="field-error" *ngIf="createSellerForm.submitted && createSellerForm.controls['email']?.invalid">Email is required.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="seller-password" class="label">Password</label>
+            <input id="seller-password" name="password" class="input-control" type="password" required [(ngModel)]="createModel.password" autocomplete="new-password" />
+            <p class="field-error" *ngIf="createSellerForm.submitted && createSellerForm.controls['password']?.invalid">Password is required.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="seller-full-name" class="label">Full Name</label>
+            <input id="seller-full-name" name="fullName" class="input-control" required [(ngModel)]="createModel.fullName" />
+            <p class="field-error" *ngIf="createSellerForm.submitted && createSellerForm.controls['fullName']?.invalid">Full name is required.</p>
+          </div>
+
+          <div class="form-group">
+            <label for="seller-phone" class="label">Phone</label>
+            <input id="seller-phone" name="phone" class="input-control" required [(ngModel)]="createModel.phone" />
+            <p class="field-error" *ngIf="createSellerForm.submitted && createSellerForm.controls['phone']?.invalid">Phone is required.</p>
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="seller-shop-name" class="label">Shop / Company Name</label>
+            <input id="seller-shop-name" name="shopName" class="input-control" required [(ngModel)]="createModel.shopName" />
+            <p class="field-error" *ngIf="createSellerForm.submitted && createSellerForm.controls['shopName']?.invalid">Shop name is required.</p>
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="seller-description" class="label">Description</label>
+            <textarea id="seller-description" name="description" class="input-control" rows="4" [(ngModel)]="createModel.description"></textarea>
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="seller-address" class="label">Address</label>
+            <textarea id="seller-address" name="address" class="input-control" rows="3" required [(ngModel)]="createModel.address"></textarea>
+            <p class="field-error" *ngIf="createSellerForm.submitted && createSellerForm.controls['address']?.invalid">Address is required.</p>
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="seller-logo-file" class="label">Upload logo</label>
+            <div class="seller-logo-upload">
+              <div class="logo-upload-preview" *ngIf="getCreateLogoPreview(); else noCreateLogoPreview">
+                <img [src]="getCreateLogoPreview()" alt="Seller logo preview" />
+              </div>
+              <ng-template #noCreateLogoPreview>
+                <div class="logo-upload-placeholder">No logo</div>
+              </ng-template>
+
+              <div class="logo-upload-controls">
+                <input
+                  id="seller-logo-file"
+                  class="input-control"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  (change)="onLogoFileSelected($event)"
+                  [disabled]="submitting || uploadingLogo"
+                />
+                <span class="muted">{{ uploadingLogo ? 'Uploading logo...' : 'JPG, PNG, or WebP - max 5 MB' }}</span>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  *ngIf="getCreateLogoPreview()"
+                  (click)="clearLogoSelection()"
+                  [disabled]="submitting || uploadingLogo"
+                >
+                  Remove logo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group form-group-full">
+            <label for="seller-logo-url" class="label">Logo URL</label>
+            <input id="seller-logo-url" name="logoUrl" class="input-control" type="url" [(ngModel)]="createModel.logoUrl" placeholder="https://example.com/logo.png" />
+          </div>
+
+          <div class="form-group form-group-full checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="active" [(ngModel)]="createModel.active" />
+              <span>Account active</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateModal(createSellerForm)" [disabled]="submitting">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting || uploadingLogo">
+            {{ submitting ? 'Creating...' : 'Create seller' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

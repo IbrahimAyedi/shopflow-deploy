@@ -1,0 +1,148 @@
+.seller-profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  --seller-accent: #6d28d9;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--seller-accent);
+  padding-bottom: 1rem;
+}
+
+.page-title {
+  margin: 0 0 0.25rem 0;
+  color: var(--seller-accent);
+}
+
+.page-subtitle {
+  margin: 0;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.profile-preview {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem;
+}
+
+.logo-preview {
+  width: 140px;
+  height: 140px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: var(--surface-soft);
+  border: 3px solid var(--surface-soft);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.no-logo-placeholder {
+  color: var(--text);
+  opacity: 0.5;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.shop-details {
+  text-align: center;
+}
+
+.shop-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  word-break: break-all;
+}
+
+.shop-rating {
+  margin-bottom: 1rem;
+}
+
+.shop-description {
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.crud-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2.5rem;
+  border-top: 4px solid var(--seller-accent);
+}
+
+.crud-form h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--seller-accent);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.input-control {
+  width: 100%;
+  max-width: 500px;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.input-control:focus {
+  outline: none;
+  border-color: var(--seller-accent);
+}
+
+.form-actions {
+  margin-top: 1rem;
+}
+
+@media (max-width: 900px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .profile-preview {
+    order: -1;
+  }
+  
+  .input-control {
+    max-width: 100%;
+  }
+}

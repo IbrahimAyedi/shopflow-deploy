@@ -1,0 +1,108 @@
+<div class="admin-reviews-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Review Moderation</h1>
+      <p class="page-subtitle">Approve or remove pending customer reviews.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="loadPendingReviews()" [disabled]="loading">
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">Loading pending reviews...</div>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+  <div *ngIf="actionMessage" class="success-message">{{ actionMessage }}</div>
+  <div *ngIf="actionError" class="error-message">{{ actionError }}</div>
+
+  <div *ngIf="!loading && reviews.length === 0 && !error" class="empty-state">
+    <h2>All clear</h2>
+    <p>No pending reviews to moderate right now.</p>
+  </div>
+
+  <div class="reviews-list" *ngIf="!loading && reviews.length > 0">
+    <div class="review-card card" *ngFor="let review of reviews">
+
+      <!-- Review header -->
+      <div class="review-card-header">
+        <div class="review-meta">
+          <span class="review-ref">Review #{{ review.id }} — Product #{{ review.productId }}</span>
+          <span class="review-date muted">{{ review.dateCreation | date:'mediumDate' }}</span>
+        </div>
+        <div class="review-rating">
+          <span *ngFor="let star of [1,2,3,4,5]"
+                [class.star-filled]="star <= review.note"
+                [class.star-empty]="star > review.note">★</span>
+          <span class="rating-label muted">{{ review.note }}/5</span>
+        </div>
+      </div>
+
+      <!-- Review body -->
+      <div class="review-card-body">
+        <div class="reviewer-info">
+          <span class="reviewer-name">{{ review.customerName || review.customerEmail || 'Anonymous' }}</span>
+        </div>
+        <div class="review-comment">
+          {{ review.commentaire || 'No comment provided.' }}
+        </div>
+      </div>
+
+      <!-- Review actions -->
+      <div class="review-card-footer">
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="approveReview(review.id)"
+          [disabled]="processingId !== null"
+        >
+          {{ processingId === review.id ? 'Processing...' : 'Approve' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="requestDeleteReview(review)"
+          [disabled]="processingId !== null"
+        >
+          Delete
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="reviewPendingDelete as reviewToDelete">
+    <div
+      class="modal-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-review-title"
+    >
+      <div class="modal-header">
+        <div>
+          <h2 id="delete-review-title">Delete review</h2>
+          <p class="modal-subtitle">
+            Remove review #{{ reviewToDelete.id }} for product #{{ reviewToDelete.productId }} from moderation.
+          </p>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="cancelDeleteReview()"
+          [disabled]="processingId !== null"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="confirmDeleteReview()"
+          [disabled]="processingId !== null"
+        >
+          {{ processingId !== null ? 'Deleting...' : 'Delete review' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

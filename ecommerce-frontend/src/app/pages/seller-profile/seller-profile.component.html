@@ -1,0 +1,87 @@
+<section class="seller-profile-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Seller Profile</h1>
+      <p class="page-subtitle">Manage your storefront details.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="loadProfile()" [disabled]="loading">
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading seller profile...</p>
+  </div>
+  <div class="error-message" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+  <div class="success-message" *ngIf="actionMessage">{{ actionMessage }}</div>
+  <div class="error-message" *ngIf="actionErrorMessage">{{ actionErrorMessage }}</div>
+
+  <div class="profile-layout" *ngIf="!loading && !errorMessage">
+    <aside class="profile-preview card" *ngIf="profile">
+      <div class="logo-preview">
+        <img *ngIf="profile.logo; else noLogo" [src]="resolveLogoUrl(profile.logo)" [alt]="profile.nomBoutique" />
+        <ng-template #noLogo>
+          <div class="no-logo-placeholder">No logo</div>
+        </ng-template>
+      </div>
+      
+      <div class="shop-details">
+        <h2 class="shop-name">{{ profile.nomBoutique }}</h2>
+        <div class="shop-rating" *ngIf="profile.note !== null && profile.note !== undefined">
+          <span class="badge status-success">★ {{ profile.note }}</span>
+        </div>
+        <p class="shop-description muted">{{ profile.description || 'No description yet.' }}</p>
+      </div>
+    </aside>
+
+    <div class="profile-form-section">
+      <form class="crud-form card" #profileForm="ngForm" (ngSubmit)="onSubmit(profileForm)">
+        <h2>{{ profile ? 'Update Profile' : 'Create Profile' }}</h2>
+
+        <div class="form-group">
+          <label for="nom-boutique" class="label">Boutique Name</label>
+          <input
+            id="nom-boutique"
+            name="nomBoutique"
+            class="input-control"
+            required
+            maxlength="120"
+            [(ngModel)]="formModel.nomBoutique"
+          />
+          <p class="field-error" *ngIf="profileForm.submitted && profileForm.controls['nomBoutique']?.invalid">
+            Boutique name is required.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="seller-description" class="label">Description</label>
+          <textarea
+            id="seller-description"
+            name="description"
+            class="input-control"
+            rows="4"
+            [(ngModel)]="formModel.description"
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="seller-logo" class="label">Logo URL</label>
+          <input
+            id="seller-logo"
+            name="logo"
+            type="url"
+            class="input-control"
+            placeholder="https://example.com/logo.png"
+            [(ngModel)]="formModel.logo"
+          />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            {{ submitting ? 'Saving...' : 'Save Profile' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

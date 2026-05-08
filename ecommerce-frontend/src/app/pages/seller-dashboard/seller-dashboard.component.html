@@ -1,0 +1,129 @@
+<div class="seller-dashboard">
+
+  <!-- ── Page Header ─────────────────────────────────── -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Seller Dashboard</h1>
+      <p class="page-subtitle">Shop performance and inventory overview.</p>
+    </div>
+  </div>
+
+  <!-- ── Quick Actions ───────────────────────────────── -->
+  <div class="quick-actions">
+    <a
+      *ngFor="let action of quickActions"
+      [routerLink]="action.route"
+      class="quick-action-btn"
+      [class.quick-action-primary]="action.primary"
+    >
+      <span class="action-icon">{{ action.icon }}</span>
+      <span>{{ action.label }}</span>
+    </a>
+  </div>
+
+  <!-- ── Loading / Error ─────────────────────────────── -->
+  <div *ngIf="loading" class="loading-spinner">Loading dashboard data...</div>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="!loading && !error">
+    <ng-container *ngIf="dashboard; let d">
+
+      <!-- ── Welcome Banner ──────────────────────────── -->
+      <div class="dashboard-welcome card">
+        <div class="welcome-text">
+          <h2 class="welcome-title">Seller Portal</h2>
+          <p class="welcome-sub muted">Track your shop performance and manage incoming orders.</p>
+        </div>
+        <img
+          class="welcome-illustration"
+          src="assets/illustrations/seller-dashboard.jpg"
+          alt="Seller dashboard"
+          title="Seller dashboard"
+        />
+      </div>
+
+      <!-- ── Pending Orders Alert ────────────────────── -->
+      <div class="attention-strip" *ngIf="d.pendingOrders && d.pendingOrders > 0">
+        <span class="attention-dot"></span>
+        <span class="attention-text">
+          <strong>{{ d.pendingOrders }}</strong> order{{ d.pendingOrders === 1 ? '' : 's' }} waiting for your acceptance
+        </span>
+        <a routerLink="/seller/orders" class="attention-link">Review now →</a>
+      </div>
+
+      <!-- ── Stat Cards ──────────────────────────────── -->
+      <div class="stat-cards">
+        <div class="stat-card card stat-revenue">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label muted">Seller Revenue</div>
+          <div class="stat-value">{{ d.sellerRevenue != null ? (d.sellerRevenue | formatCurrency:'1.0-0') : 'N/A' }}</div>
+          <div class="stat-caption muted">From delivered orders</div>
+        </div>
+
+        <div class="stat-card card" [class.stat-pending]="d.pendingOrders && d.pendingOrders > 0" [class.stat-ok]="!d.pendingOrders || d.pendingOrders === 0">
+          <div class="stat-icon">📬</div>
+          <div class="stat-label muted">Pending Orders</div>
+          <div class="stat-value">{{ d.pendingOrders != null ? d.pendingOrders : 'N/A' }}</div>
+          <div class="stat-caption muted">Awaiting acceptance</div>
+        </div>
+
+        <div class="stat-card card" [class.stat-danger]="d.lowStockProducts && d.lowStockProducts.length > 0" [class.stat-ok]="!d.lowStockProducts || d.lowStockProducts.length === 0">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-label muted">Low Stock Items</div>
+          <div class="stat-value">{{ d.lowStockProducts ? d.lowStockProducts.length : 0 }}</div>
+          <div class="stat-caption muted">Products below 5 units</div>
+        </div>
+      </div>
+
+      <!-- ── Low Stock Products ──────────────────────── -->
+      <section class="dashboard-section card">
+        <div class="section-header">
+          <h2 class="section-title">Low Stock Alert</h2>
+          <a routerLink="/seller/products" class="section-action">Manage Products →</a>
+        </div>
+        <ng-container *ngIf="d.lowStockProducts && d.lowStockProducts.length > 0; else noLowStock">
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Price</th>
+                  <th class="text-right">Stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let product of d.lowStockProducts">
+                  <td>
+                    <div class="product-cell">
+                      <div class="product-thumb">
+                        <img
+                          *ngIf="product.imageUrl"
+                          [src]="product.imageUrl"
+                          [alt]="product.name"
+                        />
+                        <span *ngIf="!product.imageUrl" class="thumb-placeholder">📦</span>
+                      </div>
+                      <span class="font-medium">{{ product.name ?? '—' }}</span>
+                    </div>
+                  </td>
+                  <td class="muted">{{ product.price != null ? (product.price | formatCurrency:'1.2-2') : '—' }}</td>
+                  <td class="text-right">
+                    <span class="badge" [ngClass]="stockBadgeClass(product.quantity)">
+                      {{ stockLabel(product.quantity) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+        <ng-template #noLowStock>
+          <div class="empty-state">
+            <p class="muted">✅ All products are well stocked.</p>
+          </div>
+        </ng-template>
+      </section>
+
+    </ng-container>
+  </ng-container>
+</div>

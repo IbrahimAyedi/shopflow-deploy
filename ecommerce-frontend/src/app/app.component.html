@@ -1,0 +1,247 @@
+<!-- Top Navbar -->
+<header class="navbar" *ngIf="!isAuthPage">
+  <div class="navbar-container">
+    <a class="brand-logo" [routerLink]="logoRoute" aria-label="ShopFlow home">
+      <img src="assets/illustrations/logo.png" alt="ShopFlow" class="navbar-logo" />
+    </a>
+
+    <!-- Customer top nav links -->
+    <nav class="nav-links" aria-label="Primary navigation" *ngIf="!showSidebar">
+      <a *ngIf="isLoggedIn" routerLink="/home" routerLinkActive="active">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+        Home
+      </a>
+      <a routerLink="/products" routerLinkActive="active">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        Products
+      </a>
+      <ng-container *ngIf="isCustomer">
+        <a routerLink="/cart" routerLinkActive="active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          Cart
+        </a>
+        <a routerLink="/orders" routerLinkActive="active">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Orders
+        </a>
+      </ng-container>
+    </nav>
+
+    <!-- Search bar for Customer only -->
+    <div class="nav-search-container" *ngIf="isCustomer && !showSidebar">
+      <form class="nav-search-form" (ngSubmit)="onNavSearch()">
+        <div class="nav-search-wrapper">
+          <svg class="nav-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" class="nav-search-input" placeholder="Search products..." [(ngModel)]="navSearchQuery" name="navSearchQuery">
+        </div>
+      </form>
+    </div>
+
+    <!-- Spacer for sidebar mode -->
+    <div class="nav-spacer" *ngIf="showSidebar"></div>
+
+    <!-- Auth actions -->
+    <div class="auth-actions" *ngIf="isLoggedIn; else guestLinks">
+      <!-- Avatar dropdown -->
+      <div class="avatar-dropdown" (click)="$event.stopPropagation()">
+        <button
+          type="button"
+          class="avatar-btn"
+          [ngClass]="{
+            'avatar-customer': auth?.role === 'CUSTOMER',
+            'avatar-seller': auth?.role === 'SELLER',
+            'avatar-admin': auth?.role === 'ADMIN'
+          }"
+          (click)="toggleDropdown($event)"
+          aria-label="User menu"
+        >
+          {{ userInitial }}
+        </button>
+
+        <div class="dropdown-menu" *ngIf="dropdownOpen">
+          <div class="dropdown-header">
+            <span class="dropdown-email">{{ auth?.email }}</span>
+            <span class="badge"
+                  [ngClass]="{
+                    'badge-customer': auth?.role === 'CUSTOMER',
+                    'badge-seller': auth?.role === 'SELLER',
+                    'badge-admin': auth?.role === 'ADMIN'
+                  }">
+              {{ auth?.role }}
+            </span>
+          </div>
+          <div class="dropdown-divider"></div>
+          <a class="dropdown-item" routerLink="/profile" (click)="closeDropdown()">
+            <span class="dropdown-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </span> Profile
+          </a>
+          <a class="dropdown-item" *ngIf="isCustomer" routerLink="/addresses" (click)="closeDropdown()">
+            <span class="dropdown-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </span> Addresses
+          </a>
+          <a class="dropdown-item" *ngIf="isCustomer" routerLink="/orders" (click)="closeDropdown()">
+            <span class="dropdown-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </span> My Orders
+          </a>
+          <div class="dropdown-divider"></div>
+          <button type="button" class="dropdown-item dropdown-logout" (click)="logout()">
+            <span class="dropdown-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            </span> Logout
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #guestLinks>
+      <div class="auth-actions">
+        <a routerLink="/login" routerLinkActive="active" class="btn btn-secondary">Login</a>
+        <a routerLink="/register" routerLinkActive="active" class="btn btn-primary">Register</a>
+      </div>
+    </ng-template>
+  </div>
+</header>
+
+<!-- Layout with optional sidebar -->
+<div class="app-layout" [class.has-sidebar]="showSidebar && !isAuthPage" [class.auth-mode]="isAuthPage">
+
+  <!-- Sidebar for Admin / Seller -->
+  <aside class="sidebar" [class.sidebar-admin]="isAdmin" *ngIf="showSidebar && !isAuthPage">
+    <div class="sidebar-header">
+      <span class="sidebar-role-icon">
+        <svg *ngIf="isAdmin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <svg *ngIf="isSeller" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-6h15L21 9v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"></path><path d="M3 9h18"></path><path d="M8 21v-5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"></path></svg>
+      </span>
+      <span class="sidebar-role-label">{{ isAdmin ? 'Admin Panel' : 'Seller Panel' }}</span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <!-- Admin sidebar links -->
+      <ng-container *ngIf="isAdmin">
+        <a routerLink="/admin/dashboard" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+          </span> Dashboard
+        </a>
+        <a routerLink="/admin/categories" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          </span> Categories
+        </a>
+        <a routerLink="/admin/sellers" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          </span> Sellers
+        </a>
+        <a routerLink="/admin/seller-requests" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10.5V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h9"></path><path d="m22 7-10 6L2 7"></path><path d="M16 19h6"></path><path d="M19 16v6"></path></svg>
+          </span> Seller Requests
+        </a>
+        <a routerLink="/admin/orders" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </span> All Orders
+        </a>
+        <a routerLink="/admin/reviews" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          </span> Reviews
+        </a>
+        <a routerLink="/admin/coupons" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-6"></path><path d="M7 10V7a5 5 0 0 1 10 0v3"></path><path d="M3 3l18 18"></path></svg>
+          </span> Coupons
+        </a>
+        <div class="sidebar-divider"></div>
+        <a routerLink="/products" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          </span> Browse Products
+        </a>
+      </ng-container>
+
+      <!-- Seller sidebar links -->
+      <ng-container *ngIf="isSeller">
+        <a routerLink="/seller/dashboard" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+          </span> Dashboard
+        </a>
+        <a routerLink="/seller/products" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+          </span> My Products
+        </a>
+        <a routerLink="/seller/orders" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </span> Received Orders
+        </a>
+        <a routerLink="/seller/profile" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-6h15L21 9v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"></path><path d="M3 9h18"></path><path d="M8 21v-5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5"></path></svg>
+          </span> Seller Profile
+        </a>
+        <div class="sidebar-divider"></div>
+        <a routerLink="/products" routerLinkActive="sidebar-active" class="sidebar-link">
+          <span class="sidebar-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          </span> Browse Products
+        </a>
+      </ng-container>
+    </nav>
+  </aside>
+
+  <!-- Main content -->
+  <div class="main-content-wrapper">
+    <main [ngClass]="isAuthPage ? 'auth-shell' : 'page-shell'">
+      <router-outlet></router-outlet>
+    </main>
+
+    <!-- Professional Footer -->
+    <footer class="app-footer" *ngIf="!isAuthPage">
+      <div class="footer-container">
+        <div class="footer-brand">
+          <img src="assets/illustrations/logo.png" alt="ShopFlow" class="footer-logo" />
+          <p class="footer-desc">The premier marketplace for top-quality goods. Fast, reliable, and beautifully designed.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-column">
+            <h4>Marketplace</h4>
+            <a routerLink="/home">Home</a>
+            <a routerLink="/products">Browse Products</a>
+          </div>
+          <div class="footer-column" *ngIf="isCustomer">
+            <h4>My Account</h4>
+            <a routerLink="/cart">Shopping Cart</a>
+            <a routerLink="/orders">My Orders</a>
+            <a routerLink="/profile">Profile Settings</a>
+          </div>
+          <div class="footer-column">
+            <h4>Support</h4>
+            <a href="mailto:support@shopflow.test">Contact Us</a>
+            <a href="javascript:void(0)">Help Center</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 ShopFlow. All rights reserved.</p>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- Scroll to top button -->
+<button
+  *ngIf="showScrollTop && !isAuthPage"
+  type="button"
+  class="scroll-to-top-btn"
+  (click)="scrollToTop()"
+  aria-label="Scroll to top"
+>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 1.25rem; height: 1.25rem;"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+</button>

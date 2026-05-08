@@ -1,0 +1,378 @@
+<section class="seller-products-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Seller Products</h1>
+      <p class="page-subtitle">Create and manage catalogue products.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-secondary" (click)="loadProducts()" [disabled]="loading">
+        ⟳ {{ loading ? 'Loading...' : 'Refresh' }}
+      </button>
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()" [disabled]="loading || submitting">
+        ＋ Add Product
+      </button>
+    </div>
+  </div>
+
+  <div class="info-banner">
+    <span class="info-icon">ℹ️</span>
+    <p>Showing products assigned to your seller account.</p>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading products...</p>
+  </div>
+  <div class="error-message" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+  <div class="success-message" *ngIf="actionMessage">{{ actionMessage }}</div>
+  <div class="error-message" *ngIf="actionErrorMessage">{{ actionErrorMessage }}</div>
+
+  <div class="crud-layout" *ngIf="!loading && !errorMessage">
+    <div class="list-section card">
+      <div class="empty-state" *ngIf="!hasProducts">
+        <p class="muted">No products found. Add your first product to get started.</p>
+      </div>
+
+      <div class="table-responsive" *ngIf="hasProducts">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of products">
+              <td>
+                <div class="product-cell">
+                  <div class="product-thumb">
+                    <img *ngIf="product.imageUrl" [src]="resolveImageUrl(product.imageUrl)" [alt]="product.name" />
+                    <span *ngIf="!product.imageUrl">No img</span>
+                  </div>
+                  <div>
+                    <strong class="font-medium">{{ product.name }}</strong>
+                    <span class="muted" style="display:block; font-size: 0.75rem;">#{{ product.id }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="font-medium">{{ product.price | formatCurrency:'1.2-2' }}</td>
+              <td>{{ product.quantity }}</td>
+              <td>
+                <span class="badge" [ngClass]="product.actif ? 'status-success' : 'status-danger'">
+                  {{ product.actif ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+              <td>
+                <div class="row-actions">
+                  <a [routerLink]="['/products', product.id]" class="btn btn-secondary btn-sm">👁️ View</a>
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="editProduct(product)"
+                    [disabled]="submitting || deletingProductId !== null"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    (click)="requestDeleteProduct(product)"
+                    [disabled]="submitting || deletingProductId !== null"
+                  >
+                    🗑️ {{ deletingProductId === product.id ? '...' : 'Delete' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="showCreateModal">
+    <div
+      class="modal-panel modal-panel-wide"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-product-title"
+    >
+      <form class="modal-form" #createProductForm="ngForm" (ngSubmit)="submitCreateModal(createProductForm)">
+        <div class="modal-header">
+          <div>
+            <h2 id="create-product-title">Create Product</h2>
+            <p class="modal-subtitle">Add a new product to your seller catalogue.</p>
+          </div>
+        </div>
+
+        <div class="error-message" *ngIf="modalErrorMessage">{{ modalErrorMessage }}</div>
+
+        <div class="form-group">
+          <label for="create-product-name" class="label">Name</label>
+          <input
+            id="create-product-name"
+            name="name"
+            class="input-control"
+            required
+            [(ngModel)]="createModel.name"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="create-product-price" class="label">Price</label>
+            <input
+              id="create-product-price"
+              name="price"
+              type="number"
+              class="input-control"
+              min="0.01"
+              step="0.01"
+              required
+              [(ngModel)]="createModel.price"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="create-product-quantity" class="label">Quantity</label>
+            <input
+              id="create-product-quantity"
+              name="quantity"
+              type="number"
+              class="input-control"
+              min="0"
+              step="1"
+              required
+              [(ngModel)]="createModel.quantity"
+            />
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="categories.length > 0">
+          <label for="create-category" class="label">Category</label>
+          <select
+            id="create-category"
+            name="categoryId"
+            class="input-control"
+            [(ngModel)]="createModel.categoryId"
+          >
+            <option [ngValue]="null">— None —</option>
+            <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Product Image</label>
+          <div class="image-upload-area">
+            <div class="image-preview" *ngIf="imagePreview">
+              <img [src]="imagePreview" alt="Preview" />
+              <button type="button" class="remove-preview-btn" (click)="clearImage()">✕</button>
+            </div>
+            <div class="upload-controls" *ngIf="!imagePreview">
+              <label for="create-image-file" class="upload-label">
+                📷 Choose Image
+              </label>
+              <input
+                id="create-image-file"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                (change)="onFileSelected($event)"
+                class="file-input-hidden"
+              />
+              <span class="upload-hint muted">JPG, PNG, or WebP — max 5 MB</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="create-image-url" class="label">Or Image URL</label>
+          <input
+            id="create-image-url"
+            name="imageUrl"
+            type="url"
+            class="input-control"
+            placeholder="https://example.com/image.jpg"
+            [(ngModel)]="createModel.imageUrl"
+          />
+        </div>
+
+        <p class="field-error" *ngIf="createProductForm.submitted && (createProductForm.invalid || createModel.price === null || createModel.quantity === null)">
+          Name, price, and quantity are required.
+        </p>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeCreateModal(createProductForm)"
+            [disabled]="submitting"
+          >
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            {{ submitting ? 'Saving...' : 'Create product' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="isEditing">
+    <div
+      class="modal-panel modal-panel-wide"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-product-title"
+    >
+      <form class="modal-form" #editProductForm="ngForm" (ngSubmit)="saveEdit(editProductForm)">
+        <div class="modal-header">
+          <div>
+            <h2 id="edit-product-title">Edit Product</h2>
+            <p class="modal-subtitle">Update {{ editingProductName }} without changing the table until you save.</p>
+          </div>
+        </div>
+
+        <div class="error-message" *ngIf="modalErrorMessage">{{ modalErrorMessage }}</div>
+
+        <div class="form-group">
+          <label for="edit-product-name" class="label">Name</label>
+          <input
+            id="edit-product-name"
+            name="name"
+            class="input-control"
+            required
+            [(ngModel)]="editModel.name"
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-product-price" class="label">Price</label>
+            <input
+              id="edit-product-price"
+              name="price"
+              type="number"
+              class="input-control"
+              min="0.01"
+              step="0.01"
+              required
+              [(ngModel)]="editModel.price"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="edit-product-quantity" class="label">Quantity</label>
+            <input
+              id="edit-product-quantity"
+              name="quantity"
+              type="number"
+              class="input-control"
+              min="0"
+              step="1"
+              required
+              [(ngModel)]="editModel.quantity"
+            />
+          </div>
+        </div>
+
+        <div class="form-group" *ngIf="categories.length > 0">
+          <label for="edit-category" class="label">Category</label>
+          <select
+            id="edit-category"
+            name="categoryId"
+            class="input-control"
+            [(ngModel)]="editModel.categoryId"
+          >
+            <option [ngValue]="null">— None —</option>
+            <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Product Image</label>
+          <div class="image-upload-area">
+            <div class="image-preview" *ngIf="imagePreview">
+              <img [src]="imagePreview" alt="Preview" />
+              <button type="button" class="remove-preview-btn" (click)="clearImage()">✕</button>
+            </div>
+            <div class="upload-controls" *ngIf="!imagePreview">
+              <label for="edit-image-file" class="upload-label">
+                📷 Choose Image
+              </label>
+              <input
+                id="edit-image-file"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                (change)="onFileSelected($event)"
+                class="file-input-hidden"
+              />
+              <span class="upload-hint muted">JPG, PNG, or WebP — max 5 MB</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-image-url" class="label">Or Image URL</label>
+          <input
+            id="edit-image-url"
+            name="imageUrl"
+            type="url"
+            class="input-control"
+            placeholder="https://example.com/image.jpg"
+            [(ngModel)]="editModel.imageUrl"
+          />
+        </div>
+
+        <p class="field-error" *ngIf="editProductForm.submitted && (editProductForm.invalid || editModel.price === null || editModel.quantity === null)">
+          Name, price, and quantity are required.
+        </p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancelEdit(editProductForm)" [disabled]="submitting">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            {{ submitting ? 'Saving...' : 'Save changes' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" *ngIf="productPendingDelete as productToDelete">
+    <div
+      class="modal-panel modal-panel-small"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-product-title"
+    >
+      <div class="modal-header">
+        <div>
+          <h2 id="delete-product-title">Delete Product</h2>
+          <p class="modal-subtitle">This will remove {{ productToDelete.name }} from your catalogue.</p>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="cancelDeleteProduct()"
+          [disabled]="deletingProductId !== null"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="confirmDeleteProduct()"
+          [disabled]="deletingProductId !== null"
+        >
+          {{ deletingProductId !== null ? 'Deleting...' : 'Delete product' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

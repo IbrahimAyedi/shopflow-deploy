@@ -1,0 +1,127 @@
+<section class="profile-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">My Profile</h1>
+      <p class="page-subtitle">Manage your personal information and account settings.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="logout()">Logout</button>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading profile...</p>
+  </div>
+  <div class="error-message" *ngIf="!loading && errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="profile-content" *ngIf="!loading && profile">
+    <aside class="profile-sidebar card">
+      <div class="avatar-preview">
+        <img [src]="profile.avatarUrl || '/assets/avatars/default.svg'" alt="Avatar" />
+      </div>
+      
+      <div class="readonly-info">
+        <h2 class="user-email">{{ profile.email }}</h2>
+        <div class="user-badges">
+          <span class="badge" [ngClass]="{
+            'badge-customer': profile.role === 'CUSTOMER',
+            'badge-seller': profile.role === 'SELLER',
+            'badge-admin': profile.role === 'ADMIN'
+          }">{{ profile.role }}</span>
+          <span class="badge" [ngClass]="profile.active ? 'status-success' : 'status-danger'">
+            {{ profile.active ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="quick-links" *ngIf="isCustomer">
+        <h3>Customer Links</h3>
+        <nav>
+          <a routerLink="/products">Browse Products</a>
+          <a routerLink="/cart">My Cart</a>
+          <a routerLink="/addresses">My Addresses</a>
+          <a routerLink="/orders">My Orders</a>
+        </nav>
+      </div>
+
+      <div class="quick-links" *ngIf="isSeller">
+        <h3>Seller Links</h3>
+        <nav>
+          <a routerLink="/seller/dashboard">Seller Dashboard</a>
+          <a routerLink="/seller/profile">Business Profile</a>
+          <a routerLink="/seller/products">Manage Products</a>
+        </nav>
+        <div class="seller-note">
+          <p>Seller shop settings are available in Seller Profile</p>
+          <a routerLink="/seller/profile" class="btn btn-secondary btn-sm" style="display: block; text-align: center;">Go to Seller Profile</a>
+        </div>
+      </div>
+
+      <div class="quick-links" *ngIf="isAdmin">
+        <h3>Admin Links</h3>
+        <nav>
+          <a routerLink="/admin/dashboard">Admin Dashboard</a>
+          <a routerLink="/admin/categories">Manage Categories</a>
+        </nav>
+      </div>
+    </aside>
+
+    <div class="profile-main card">
+      <h2>Edit Information</h2>
+
+      <div class="success-message" *ngIf="actionMessage">{{ actionMessage }}</div>
+      <div class="error-message" *ngIf="actionErrorMessage">{{ actionErrorMessage }}</div>
+
+      <form class="profile-form" #profileForm="ngForm" (ngSubmit)="onSubmit(profileForm)">
+        <div class="form-group">
+          <label for="fullName" class="label">Full Name</label>
+          <input
+            id="fullName"
+            name="fullName"
+            class="input-control"
+            maxlength="120"
+            [(ngModel)]="formModel.fullName"
+            placeholder="e.g. Jane Doe"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="phone" class="label">Phone Number</label>
+          <input
+            id="phone"
+            name="phone"
+            class="input-control"
+            maxlength="50"
+            [(ngModel)]="formModel.phone"
+            placeholder="e.g. +1 555 123 4567"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="avatarUrl" class="label">Avatar URL</label>
+          <input
+            id="avatarUrl"
+            name="avatarUrl"
+            class="input-control"
+            [(ngModel)]="formModel.avatarUrl"
+            placeholder="/assets/avatars/default.svg"
+          />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">
+            {{ submitting ? 'Saving...' : 'Save Profile' }}
+          </button>
+        </div>
+      </form>
+      
+      <div class="danger-section" *ngIf="isCustomer">
+        <h3>Danger Zone</h3>
+        <p class="muted">Deactivate your account if you no longer wish to use ShopFlow. This will disable your account and log you out.</p>
+        <div class="form-actions">
+          <button type="button" class="btn btn-danger" (click)="deactivateMyAccount()" [disabled]="submitting">Deactivate my account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

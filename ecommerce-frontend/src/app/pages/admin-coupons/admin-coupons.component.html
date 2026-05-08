@@ -1,0 +1,145 @@
+<section class="admin-coupons-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Manage Coupons</h1>
+      <p class="page-subtitle">Create and manage discount coupons.</p>
+    </div>
+    <div class="page-actions">
+      <button type="button" class="btn btn-secondary" (click)="loadCoupons()" [disabled]="loading">
+        {{ loading ? 'Loading...' : 'Refresh' }}
+      </button>
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()" [disabled]="loading || submitting">
+        + Create Coupon
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading coupons...</p>
+  </div>
+  <div class="error-message" *ngIf="!loading && errorMessage">{{ errorMessage }}</div>
+  <div class="success-message" *ngIf="actionMessage">{{ actionMessage }}</div>
+
+  <div class="card coupons-card" *ngIf="!loading && !errorMessage">
+    <div class="empty-state" *ngIf="!hasCoupons">
+      <p class="muted">No coupons available.</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="hasCoupons">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Type</th>
+            <th>Value</th>
+            <th>Expires</th>
+            <th>Uses</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let coupon of coupons">
+            <td>{{ coupon.code }}</td>
+            <td>{{ getTypeLabel(coupon.type) }}</td>
+            <td>{{ formatValue(coupon) }}</td>
+            <td>{{ formatExpiration(coupon) }}</td>
+            <td>{{ coupon.usagesActuels ?? 0 }} / {{ coupon.usagesMax ?? '∞' }}</td>
+            <td>
+              <span class="badge" [ngClass]="coupon.actif ? 'status-success' : 'status-danger'">
+                {{ coupon.actif ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="table-actions">
+              <button class="btn btn-secondary btn-sm" (click)="editCoupon(coupon)" [disabled]="submitting">Edit</button>
+              <button class="btn btn-danger btn-sm" (click)="toggleCouponActive(coupon)" [disabled]="submitting || couponPendingToggle === coupon">
+                {{ coupon.actif ? 'Deactivate' : 'Reactivate' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Create / Edit modal -->
+  <div class="modal-backdrop modal-backdrop-active" *ngIf="showCreateModal || isEditing" #backdrop (click)="onBackdropClick($event, backdrop)">
+    <div class="modal-card" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <form #couponForm="ngForm" (ngSubmit)="isEditing ? saveEdit(couponForm) : submitCreateModal(couponForm)">
+        <div class="modal-header">
+          <h2>{{ isEditing ? 'Edit Coupon' : 'Create Coupon' }}</h2>
+          <button type="button" class="modal-close-btn" (click)="closeCreateModal(couponForm)" [disabled]="submitting" aria-label="Close">×</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="error-message" *ngIf="modalErrorMessage">{{ modalErrorMessage }}</div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="label">Code</label>
+              <input name="code" class="input-control" required [(ngModel)]="activeModel.code" />
+            </div>
+
+            <div class="form-group">
+              <label class="label">Type</label>
+              <select name="type" class="input-control" [(ngModel)]="activeModel.type">
+                <option value="PERCENT">Percent</option>
+                <option value="FIXED">Fixed</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="label">Value</label>
+              <input name="valeur" type="number" class="input-control" required [(ngModel)]="activeModel.valeur" />
+            </div>
+
+            <div class="form-group">
+              <label class="label">Expiry</label>
+              <input name="dateExpiration" type="date" class="input-control" [(ngModel)]="activeModel.dateExpiration" />
+            </div>
+
+            <div class="form-group">
+              <label class="label">Max usages</label>
+              <input name="usagesMax" type="number" class="input-control" [(ngModel)]="activeModel.usagesMax" />
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label"><input type="checkbox" name="actif" [(ngModel)]="activeModel.actif" /> Active</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeCreateModal(couponForm)" [disabled]="submitting">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="submitting">{{ submitting ? 'Saving...' : (isEditing ? 'Save' : 'Create') }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirmation modal for deactivate/reactivate -->
+  <div class="modal-backdrop modal-backdrop-active" *ngIf="showConfirmModal" #confirmBackdrop (click)="onBackdropClick($event, confirmBackdrop)">
+    <div class="modal-card modal-card-sm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm {{ confirmAction === 'deactivate' ? 'Deactivation' : 'Reactivation' }}</h2>
+        <button type="button" class="modal-close-btn" (click)="cancelConfirm()" [disabled]="submitting" aria-label="Close">×</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="confirm-message" *ngIf="couponToConfirm && confirmAction === 'deactivate'">
+          Are you sure you want to <strong>deactivate</strong> coupon <strong>{{ couponToConfirm.code }}</strong>?
+        </p>
+        <p class="confirm-message" *ngIf="couponToConfirm && confirmAction === 'reactivate'">
+          Are you sure you want to <strong>reactivate</strong> coupon <strong>{{ couponToConfirm.code }}</strong>?
+        </p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="cancelConfirm()" [disabled]="submitting">Cancel</button>
+        <button type="button" class="btn btn-danger" (click)="confirmToggleActive()" [disabled]="submitting">
+          {{ submitting ? 'Processing...' : (confirmAction === 'deactivate' ? 'Deactivate' : 'Reactivate') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>

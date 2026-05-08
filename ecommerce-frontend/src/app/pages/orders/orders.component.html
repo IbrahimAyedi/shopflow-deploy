@@ -1,0 +1,146 @@
+<section class="orders-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">My Orders</h1>
+      <p class="page-subtitle">Track recent ShopFlow orders.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="loadOrders()" [disabled]="loading">
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading orders...</p>
+  </div>
+
+  <div class="error-message" *ngIf="!loading && errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="success-message" *ngIf="actionMessage">
+    {{ actionMessage }}
+  </div>
+
+  <div class="error-message" *ngIf="actionErrorMessage">
+    {{ actionErrorMessage }}
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !errorMessage && !hasOrders">
+    <img class="empty-illustration" src="assets/illustrations/empty-orders.jpg" alt="No orders yet" title="No orders yet" />
+    <h2>No orders yet</h2>
+    <p class="muted">You haven't placed any orders yet. Once you check out, tracking, payment, and cancellation history will appear here.</p>
+    <a routerLink="/products" class="btn btn-primary empty-cta">Browse products</a>
+  </div>
+
+  <div class="orders-list" *ngIf="!loading && !errorMessage && hasOrders">
+    <article class="order-card card" *ngFor="let order of orders">
+      <div class="order-header">
+        <div class="order-info">
+          <h2 class="order-number">{{ getOrderNumber(order) }}</h2>
+          <p class="order-date muted" *ngIf="getDate(order)">Placed {{ getDate(order) | date:'medium' }}</p>
+        </div>
+        
+        <span class="badge" [ngClass]="{
+          'status-warning':    getStatus(order) === 'PENDING'    || getStatus(order) === 'EN_ATTENTE',
+          'status-processing': getStatus(order) === 'PROCESSING',
+          'status-shipped':    getStatus(order) === 'SHIPPED',
+          'status-success':    getStatus(order) === 'DELIVERED'  || getStatus(order) === 'LIVREE',
+          'status-paid':       getStatus(order) === 'PAID'       || getStatus(order) === 'CONFIRMED',
+          'status-danger':     getStatus(order) === 'CANCELLED'  || getStatus(order) === 'ANNULEE',
+          'status-refunded':   getStatus(order) === 'REFUNDED'
+        }">
+          {{ getStatus(order) }}
+        </span>
+      </div>
+
+      <!-- Contextual status message -->
+      <div class="status-banner status-banner-pending" *ngIf="getStatus(order) === 'PENDING'">
+        ⏳ Waiting for seller confirmation.
+      </div>
+      <div class="status-banner status-banner-accepted" *ngIf="getStatus(order) === 'PROCESSING' && !order.paymentMethod">
+        ✅ Your order was accepted. Choose a payment method below.
+      </div>
+      <div class="status-banner status-banner-paid" *ngIf="getStatus(order) === 'PROCESSING' && order.paymentMethod">
+        ✅ Order accepted — payment method confirmed.
+      </div>
+      <div class="status-banner status-banner-cancelled" *ngIf="getStatus(order) === 'CANCELLED' || getStatus(order) === 'REFUNDED'">
+        ❌ This order was cancelled or rejected.
+      </div>
+      <div class="status-banner status-banner-shipped" *ngIf="getStatus(order) === 'SHIPPED'">
+        📦 Your order is on its way!
+      </div>
+      <div class="status-banner status-banner-delivered" *ngIf="getStatus(order) === 'DELIVERED'">
+        🎉 Your order has been delivered.
+      </div>
+
+      <div class="order-body">
+        <div class="items-section" *ngIf="getItems(order).length > 0">
+          <h3>Items ordered</h3>
+          <div class="item-list">
+            <div class="item-row" *ngFor="let item of getItems(order)">
+              <span class="item-name">{{ getProductName(item) }}</span>
+              <span class="item-qty muted">Qty {{ getQuantity(item) }}</span>
+              <span class="item-price">{{ getItemTotal(item) === null ? 'N/A' : (getItemTotal(item) | formatCurrency:'1.2-2') }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="totals-section">
+          <h3>Order summary</h3>
+          <div class="totals-row">
+            <span class="muted">Subtotal</span>
+            <span>{{ order.sousTotal ?? 0 | formatCurrency:'1.2-2' }}</span>
+          </div>
+          <div class="totals-row" *ngIf="order.remise && order.remise > 0">
+            <span class="muted">Discount</span>
+            <span class="text-success">-{{ order.remise | formatCurrency:'1.2-2' }}</span>
+          </div>
+          <div class="totals-row">
+            <span class="muted">Shipping</span>
+            <span>{{ order.fraisLivraison ?? 0 | formatCurrency:'1.2-2' }}</span>
+          </div>
+          <div class="totals-row grand-total">
+            <span>Total</span>
+            <span class="total-price">{{ getTotal(order) | formatCurrency:'1.2-2' }}</span>
+          </div>
+
+          <!-- Payment method display -->
+          <div class="payment-info" *ngIf="order.paymentMethod">
+            <span class="muted">Payment method</span>
+            <span class="badge badge-customer">{{ getPaymentLabel(order.paymentMethod) }}</span>
+          </div>
+
+          <!-- Payment method selection -->
+          <div class="payment-selection" *ngIf="canSelectPayment(order)">
+            <p class="payment-prompt">
+              <strong>Choose your payment method:</strong>
+            </p>
+            <p class="payment-help muted">Your order is accepted. Select the payment method you want to use to continue.</p>
+            <div class="payment-options">
+              <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                *ngFor="let pm of paymentMethods"
+                (click)="selectPaymentMethod(order, pm.value)"
+                [disabled]="paymentOrderId !== null"
+              >
+                {{ pm.label }}
+              </button>
+            </div>
+          </div>
+          
+          <div class="order-actions" *ngIf="canCancel(order)">
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              (click)="cancelOrder(order)"
+              [disabled]="cancellingOrderId !== null"
+            >
+              {{ cancellingOrderId === order.id ? 'Cancelling...' : 'Cancel order' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>

@@ -1,0 +1,174 @@
+<section class="products-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Products</h1>
+      <p class="page-subtitle">Browse available ShopFlow products.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="loadProducts()" [disabled]="loading">
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <div class="filters card">
+    <div class="filter-group">
+      <label class="filter-label" for="product-search">Search products</label>
+      <input
+        id="product-search"
+        class="filter-input"
+        name="productSearch"
+        type="search"
+        placeholder="Search by name"
+        [(ngModel)]="searchTerm"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="max-price">Max price</label>
+      <input
+        id="max-price"
+        class="filter-input"
+        name="maxPrice"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="No limit"
+        [(ngModel)]="maxPrice"
+      />
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="min-rating">Minimum rating</label>
+      <input
+        id="min-rating"
+        class="filter-input"
+        name="minRating"
+        type="number"
+        min="0"
+        max="5"
+        step="0.1"
+        placeholder="Any"
+        [(ngModel)]="minRating"
+      />
+    </div>
+
+    <div class="filter-group" *ngIf="categories.length > 0">
+      <label class="filter-label" for="category-filter">Category</label>
+      <select
+        id="category-filter"
+        class="filter-input"
+        name="categoryFilter"
+        [(ngModel)]="selectedCategoryId"
+      >
+        <option [ngValue]="null">All categories</option>
+        <option *ngFor="let cat of categories" [ngValue]="cat.id">{{ cat.nom }}</option>
+      </select>
+    </div>
+
+    <div class="filter-group checkbox-group">
+      <label class="checkbox-label">
+        <input type="checkbox" name="activeOnly" [(ngModel)]="activeOnly" />
+        <span class="checkbox-text">Active only</span>
+      </label>
+    </div>
+
+    <div class="filter-actions">
+      <button type="button" class="btn btn-secondary" (click)="resetFilters()">
+        Reset filters
+      </button>
+    </div>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading products...</p>
+  </div>
+
+  <div class="error-message" *ngIf="!loading && errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="success-message" *ngIf="cartMessage">
+    {{ cartMessage }}
+    <a routerLink="/cart" class="cart-inline-link">View cart</a>
+  </div>
+
+  <div class="error-message" *ngIf="cartErrorMessage">
+    {{ cartErrorMessage }}
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !errorMessage && !hasProducts">
+    <img class="empty-illustration" src="assets/illustrations/empty-search.jpg" alt="No products found" title="No products found" />
+    <h2>No products found</h2>
+    <p class="muted">The catalog appears to be empty right now.</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !errorMessage && hasProducts && filteredProducts.length === 0">
+    <img class="empty-illustration" src="assets/illustrations/empty-search.jpg" alt="No results" title="No results" />
+    <h2>No results found</h2>
+    <p class="muted">Try adjusting your filters or search term.</p>
+    <button type="button" class="btn btn-secondary empty-cta" (click)="resetFilters()">Reset filters</button>
+  </div>
+
+  <div class="products-grid" *ngIf="!loading && !errorMessage && filteredProducts.length > 0">
+    <article class="product-card card" *ngFor="let product of filteredProducts">
+      <div class="product-image">
+        <img *ngIf="product.imageUrl; else noImage" [src]="resolveImageUrl(product.imageUrl)" [alt]="product.name || 'Product image'" />
+        <ng-template #noImage>
+          <span class="muted">No Image</span>
+        </ng-template>
+      </div>
+
+      <div class="product-content">
+        <div class="product-header">
+          <h2 class="product-title">{{ product.name }}</h2>
+          <span class="badge" [ngClass]="product.actif ? 'status-success' : 'status-danger'" *ngIf="product.actif !== undefined">
+            {{ product.actif ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+
+        <!-- Category badges -->
+        <div class="product-categories" *ngIf="product.categoryNames && product.categoryNames.length > 0">
+          <span class="category-badge" *ngFor="let catName of product.categoryNames">{{ catName }}</span>
+        </div>
+
+        <div class="price-row">
+          <span class="price" [class.has-promo]="product.prixPromo">
+            {{ product.price | formatCurrency:'1.2-2' }}
+          </span>
+          <span class="promo-price" *ngIf="product.prixPromo">
+            {{ product.prixPromo | formatCurrency:'1.2-2' }}
+          </span>
+        </div>
+
+        <div class="product-meta">
+          <span class="badge status-warning" *ngIf="product.quantity > 0">Stock: {{ product.quantity }}</span>
+          <span class="badge status-danger" *ngIf="product.quantity === 0">Out of Stock</span>
+          
+          <span class="rating-stars" *ngIf="product.note !== null && product.note !== undefined">
+            <ng-container *ngFor="let s of [1,2,3,4,5]">
+              <span [class]="s <= (product.note || 0) ? 'star-filled' : 'star-empty'">★</span>
+            </ng-container>
+            <span class="rating-num">{{ product.note }}</span>
+          </span>
+        </div>
+
+        <div class="seller-line" *ngIf="product.sellerShopName || product.sellerName">
+          Sold by <strong>{{ product.sellerShopName || product.sellerName }}</strong>
+        </div>
+
+        <div class="product-actions">
+          <button
+            *ngIf="isCustomer"
+            type="button"
+            class="btn btn-primary"
+            (click)="onAddToCart(product)"
+            [disabled]="addingProductId !== null || product.quantity === 0"
+            title="Add to cart"
+          >
+            {{ addingProductId === product.id ? 'Adding...' : '🛒 Add to cart' }}
+          </button>
+          <a [routerLink]="['/products', product.id]" class="btn btn-secondary" title="View product details">View details</a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>

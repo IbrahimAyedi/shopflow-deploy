@@ -1,0 +1,118 @@
+<div class="admin-orders-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">All Orders</h1>
+      <p class="page-subtitle">Platform-wide order management.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="loadOrders()" [disabled]="loading">
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">Loading orders...</div>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+  <div *ngIf="actionMessage" class="success-message">{{ actionMessage }}</div>
+  <div *ngIf="actionError" class="error-message">{{ actionError }}</div>
+
+  <div *ngIf="!loading && orders.length === 0 && !error" class="empty-state">
+    <p>No orders found on this platform yet.</p>
+  </div>
+
+  <div class="orders-list" *ngIf="!loading && orders.length > 0">
+    <div class="order-card card" *ngFor="let order of orders">
+
+      <!-- Order header -->
+      <div class="order-card-header">
+        <div class="order-meta">
+          <h3 class="order-number">{{ order.numeroCommande || order.orderNumber || ('#' + order.id) }}</h3>
+          <p class="order-date muted">{{ (order.dateCommande || order.createdAt) | date:'medium' }}</p>
+        </div>
+        <span class="badge" [ngClass]="{
+          'status-warning':    (order.statut || order.status) === 'PENDING',
+          'status-processing': (order.statut || order.status) === 'PROCESSING',
+          'status-shipped':    (order.statut || order.status) === 'SHIPPED',
+          'status-success':    (order.statut || order.status) === 'DELIVERED',
+          'status-paid':       (order.statut || order.status) === 'PAID',
+          'status-danger':     (order.statut || order.status) === 'CANCELLED',
+          'status-refunded':   (order.statut || order.status) === 'REFUNDED'
+        }">
+          {{ order.statut || order.status }}
+        </span>
+      </div>
+
+      <!-- Order body -->
+      <div class="order-card-body">
+
+        <!-- Left: items + customer -->
+        <div class="order-details">
+          <div class="detail-row" *ngIf="order.customerEmail">
+            <span class="detail-label">Customer</span>
+            <span class="detail-value">{{ order.customerEmail }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Total</span>
+            <span class="detail-value detail-price">{{ order.totalTTC || order.total | formatCurrency:'1.2-2' }}</span>
+          </div>
+          <div class="detail-row" *ngIf="order.paymentMethod">
+            <span class="detail-label">Payment</span>
+            <span class="badge badge-customer">{{ order.paymentMethod }}</span>
+          </div>
+          <div class="detail-row" *ngIf="!order.paymentMethod">
+            <span class="detail-label">Payment</span>
+            <span class="muted detail-empty">No method selected</span>
+          </div>
+
+          <div class="items-section">
+            <h4 class="items-title">Items ordered</h4>
+            <div class="items-list">
+              <div class="item-row" *ngFor="let item of order.items || order.orderItems">
+                <span class="item-name">{{ item.productNom || item.productName || 'Product' }}</span>
+                <span class="item-qty muted">×{{ item.quantite || item.quantity }}</span>
+                <span class="item-price">{{ item.sousTotal || item.total | formatCurrency:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: status control -->
+        <div class="order-status-control">
+          <div class="status-display">
+            <span class="status-label">Current Status</span>
+            <span class="badge" [ngClass]="{
+              'status-warning':    getStatus(order) === 'PENDING',
+              'status-processing': getStatus(order) === 'PROCESSING',
+              'status-shipped':    getStatus(order) === 'SHIPPED',
+              'status-success':    getStatus(order) === 'DELIVERED',
+              'status-paid':       getStatus(order) === 'PAID',
+              'status-danger':     getStatus(order) === 'CANCELLED',
+              'status-refunded':   getStatus(order) === 'REFUNDED'
+            }">
+              {{ getStatus(order) }}
+            </span>
+          </div>
+
+          <!-- Terminal status note -->
+          <div class="terminal-status-note" *ngIf="isTerminalStatus(getStatus(order))">
+            <p class="note-text">✓ Order is in a final state and cannot be changed.</p>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="status-actions" *ngIf="!isTerminalStatus(getStatus(order))">
+            <button
+              *ngFor="let action of getOrderActions(order)"
+              type="button"
+              [class]="'status-action-btn btn ' + action.className"
+              [class.destructive-action]="action.isDestructive"
+              (click)="updateOrderStatus(order, action)"
+              [disabled]="processingOrderId !== null"
+              [attr.aria-label]="'Update order to ' + action.status"
+            >
+              {{ processingOrderId === order.id ? 'Processing...' : action.label }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

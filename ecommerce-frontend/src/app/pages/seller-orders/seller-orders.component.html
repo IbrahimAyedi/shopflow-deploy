@@ -1,0 +1,99 @@
+<div class="seller-orders-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Received Orders</h1>
+      <p class="page-subtitle">Manage orders containing your products.</p>
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="loadOrders()" [disabled]="loading">
+      {{ loading ? 'Loading...' : 'Refresh' }}
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-spinner">Loading orders...</div>
+  <div *ngIf="error" class="error-message">{{ error }}</div>
+  <div *ngIf="actionMessage" class="success-message">{{ actionMessage }}</div>
+
+  <div *ngIf="!loading && orders.length === 0 && !error" class="empty-state">
+    <p>You have not received any orders yet.</p>
+  </div>
+
+  <div class="orders-list" *ngIf="!loading && orders.length > 0">
+    <div class="order-card card" *ngFor="let order of orders">
+
+      <!-- Order header -->
+      <div class="order-card-header">
+        <div class="order-meta">
+          <h3 class="order-number">{{ order.numeroCommande || order.orderNumber }}</h3>
+          <p class="order-date muted">{{ (order.dateCommande || order.createdAt) | date:'medium' }}</p>
+        </div>
+        <span class="badge" [ngClass]="{
+          'status-warning':    getStatus(order) === 'PENDING',
+          'status-processing': getStatus(order) === 'PROCESSING',
+          'status-shipped':    getStatus(order) === 'SHIPPED',
+          'status-success':    getStatus(order) === 'DELIVERED',
+          'status-paid':       getStatus(order) === 'PAID',
+          'status-danger':     getStatus(order) === 'CANCELLED',
+          'status-refunded':   getStatus(order) === 'REFUNDED'
+        }">
+          {{ getStatus(order) }}
+        </span>
+      </div>
+
+      <!-- Order body -->
+      <div class="order-card-body">
+
+        <div class="detail-row" *ngIf="order.customerEmail">
+          <span class="detail-label">Customer</span>
+          <span class="detail-value">{{ order.customerEmail }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Total</span>
+          <span class="detail-value detail-price">{{ order.totalTTC || order.total | formatCurrency:'1.2-2' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="order.paymentMethod">
+          <span class="detail-label">Payment</span>
+          <span class="badge badge-seller">{{ order.paymentMethod }}</span>
+        </div>
+
+        <div class="items-section">
+          <h4 class="items-title">Items ordered</h4>
+          <div class="items-list">
+            <div class="item-row" *ngFor="let item of order.items || order.orderItems">
+              <span class="item-name">{{ item.productNom || item.productName }}</span>
+              <span class="item-qty muted">×{{ item.quantite || item.quantity }}</span>
+              <span class="item-price">{{ item.sousTotal || item.total | formatCurrency:'1.2-2' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accept / Reject actions -->
+      <div class="order-card-actions" *ngIf="isPending(order)">
+        <div class="actions-header">
+          <span class="action-prompt">What would you like to do?</span>
+        </div>
+        <div class="action-buttons">
+          <button
+            type="button"
+            class="status-action-btn btn btn-primary"
+            (click)="acceptOrder(order)"
+            [disabled]="processingOrderId !== null"
+            aria-label="Accept order"
+          >
+            {{ processingOrderId === order.id ? 'Processing...' : '✓ Accept' }}
+          </button>
+          <button
+            type="button"
+            class="status-action-btn btn btn-danger destructive-action"
+            (click)="rejectOrder(order)"
+            [disabled]="processingOrderId !== null"
+            aria-label="Reject order"
+          >
+            {{ processingOrderId === order.id ? 'Processing...' : '✕ Reject' }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

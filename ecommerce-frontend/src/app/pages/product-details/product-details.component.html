@@ -1,0 +1,177 @@
+<section class="product-details-page">
+  <div class="breadcrumb">
+    <a routerLink="/products" class="breadcrumb-link">Products</a>
+    <span class="breadcrumb-separator">/</span>
+    <span class="breadcrumb-current">Product Details</span>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading product...</p>
+  </div>
+
+  <div class="error-message" *ngIf="!loading && errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="empty-state" *ngIf="!loading && !errorMessage && !product">
+    <p>Product not found.</p>
+  </div>
+
+  <div class="product-layout" *ngIf="!loading && !errorMessage && product as item">
+    <!-- Image Card -->
+    <div class="product-image-card card">
+      <div class="product-image">
+        <img *ngIf="item.imageUrl; else noImage" [src]="resolveImageUrl(item.imageUrl)" [alt]="item.name" />
+        <ng-template #noImage>
+          <span class="muted">No Image</span>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="product-info-card card">
+      <div class="info-header">
+        <div class="title-wrapper">
+          <h1 class="product-title">{{ item.name }}</h1>
+          <span class="badge" [ngClass]="item.actif ? 'status-success' : 'status-danger'" *ngIf="item.actif !== undefined">
+            {{ item.actif ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+        <div class="seller-meta" *ngIf="item.sellerShopName || item.sellerName">
+          <img *ngIf="item.sellerLogoUrl" class="seller-logo" [src]="resolveImageUrl(item.sellerLogoUrl)" [alt]="item.sellerShopName || item.sellerName || 'Seller logo'" />
+          <div>
+            <span class="seller-label">Sold by</span>
+            <div class="seller-name">{{ item.sellerShopName || item.sellerName }}</div>
+          </div>
+        </div>
+        <!-- Category pills -->
+        <div class="product-categories" *ngIf="item.categoryNames && item.categoryNames.length > 0">
+          <span class="category-pill" *ngFor="let catName of item.categoryNames">{{ catName }}</span>
+        </div>
+      </div>
+
+      <div class="price-section">
+        <div class="price-row">
+          <span class="price" [class.has-promo]="item.prixPromo">
+            {{ item.price | formatCurrency:'1.2-2' }}
+          </span>
+          <span class="promo-price" *ngIf="item.prixPromo">
+            {{ item.prixPromo | formatCurrency:'1.2-2' }}
+          </span>
+          <span class="discount-badge" *ngIf="item.prixPromo">
+            {{ getDiscountPercentage(item) }}% off
+          </span>
+        </div>
+        <span class="badge status-warning" *ngIf="item.quantity > 0">In Stock: {{ item.quantity }}</span>
+        <span class="badge status-danger" *ngIf="item.quantity === 0">Out of Stock</span>
+      </div>
+
+      <div class="product-details-list">
+        <div class="detail-item" *ngIf="item.note !== null && item.note !== undefined">
+          <span class="detail-label">Rating</span>
+          <span class="detail-value">⭐ {{ item.note }} / 5</span>
+        </div>
+        <div class="detail-item" *ngIf="item.dateCreation">
+          <span class="detail-label">Listed on</span>
+          <span class="detail-value">{{ item.dateCreation | date:'mediumDate' }}</span>
+        </div>
+      </div>
+
+      <div class="messages">
+        <div class="success-message" *ngIf="cartMessage">
+          {{ cartMessage }}
+          <a routerLink="/cart" style="margin-left: 10px; font-weight: 600;">View cart</a>
+        </div>
+
+        <div class="error-message" *ngIf="cartErrorMessage">
+          {{ cartErrorMessage }}
+        </div>
+
+        <div class="status-message muted" *ngIf="!isCustomer">
+          <p><em>Only customers can add products to cart.</em></p>
+        </div>
+      </div>
+
+      <div class="actions" *ngIf="isCustomer">
+        <button type="button" class="btn btn-primary btn-large" (click)="addToCart(item)" [disabled]="addingToCart || item.quantity === 0">
+          {{ addingToCart ? 'Adding to cart...' : 'Add to cart' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="product-reviews-section" *ngIf="!loading && !errorMessage && product">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Customer Reviews</h2>
+      </div>
+      <div class="card-body">
+        
+        <div *ngIf="loadingReviews" class="loading-spinner">Loading reviews...</div>
+        
+        <div *ngIf="!loadingReviews && reviews.length === 0" class="empty-state">
+          <img class="empty-illustration" src="assets/illustrations/no-reviews.jpg" alt="No reviews yet" title="No reviews yet" />
+          <h2>No reviews yet</h2>
+          <p class="muted">Be the first to share your experience with this product.</p>
+        </div>
+
+        <div class="reviews-list" *ngIf="!loadingReviews && reviews.length > 0">
+          <div class="review-item" *ngFor="let review of reviews">
+            <div class="review-header">
+              <div class="review-author">
+                <span class="author-name">{{ review.customerName || review.customerEmail || 'Anonymous' }}</span>
+                <span class="review-date muted">{{ review.dateCreation | date:'mediumDate' }}</span>
+              </div>
+              <div class="review-rating">
+                <span *ngFor="let star of [1,2,3,4,5]" [ngClass]="{'star-filled': star <= review.note, 'star-empty': star > review.note}">★</span>
+              </div>
+            </div>
+            <div class="review-body">
+              <p>{{ review.commentaire }}</p>
+            </div>
+          </div>
+        </div>
+
+        <hr class="mt-4 mb-4" *ngIf="isCustomer" />
+
+        <div class="add-review-form" *ngIf="isCustomer">
+          <h3>Write a Review</h3>
+          <p class="muted">You can only review products that have been delivered to you.</p>
+
+          <div class="alert alert-success" *ngIf="reviewSuccess">{{ reviewSuccess }}</div>
+          <div class="alert alert-error" *ngIf="reviewError">{{ reviewError }}</div>
+
+          <form (ngSubmit)="submitReview()" #reviewForm="ngForm">
+            <div class="form-group">
+              <label class="label">Rating</label>
+              <small class="form-hint muted">Choose your rating</small>
+              <div class="star-rating-input" role="group" aria-label="Star rating">
+                <button
+                  type="button"
+                  *ngFor="let star of [1,2,3,4,5]"
+                  class="star-input"
+                  [class.star-input-filled]="star <= newReviewRating"
+                  [class.star-input-hover]="star <= hoverRating && hoverRating > 0"
+                  (click)="setRating(star, $event)"
+                  (mouseenter)="hoverRating = star"
+                  (mouseleave)="hoverRating = 0"
+                  [attr.aria-label]="'Select ' + star + (star === 1 ? ' star' : ' stars')"
+                  [attr.aria-pressed]="star === newReviewRating"
+                >★</button>
+                <span class="star-rating-label muted">Your rating: {{ newReviewRating }}/5</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="comment">Comment</label>
+              <textarea id="comment" name="comment" [(ngModel)]="newReviewComment" class="form-control" rows="4" placeholder="Share your experience with this product..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" [disabled]="submittingReview || !reviewForm.valid">
+              {{ submittingReview ? 'Submitting...' : 'Submit Review' }}
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>

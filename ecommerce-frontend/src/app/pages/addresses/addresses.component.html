@@ -1,0 +1,130 @@
+<section class="addresses-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Addresses</h1>
+      <p class="page-subtitle">Choose where your order should be delivered.</p>
+    </div>
+    <a routerLink="/cart" class="btn btn-secondary">Back to Cart</a>
+  </div>
+
+  <div class="empty-state" *ngIf="loading">
+    <p>Loading addresses...</p>
+  </div>
+
+  <div class="error-message" *ngIf="!loading && errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <div class="success-message" *ngIf="actionMessage">
+    {{ actionMessage }}
+  </div>
+
+  <div class="error-message" *ngIf="actionErrorMessage">
+    {{ actionErrorMessage }}
+  </div>
+
+  <div class="addresses-layout">
+    <div class="address-list-section">
+      <div class="empty-state" *ngIf="!loading && !errorMessage && !hasAddresses">
+        <img class="empty-illustration" src="assets/illustrations/empty-addresses.jpg" alt="No addresses saved" title="No addresses saved" />
+        <h2>No addresses saved</h2>
+        <p class="muted">Add a delivery address using the form to get started.</p>
+      </div>
+
+      <div class="address-grid" *ngIf="!loading && !errorMessage && hasAddresses">
+        <article class="address-card card" *ngFor="let address of addresses" [class.selected]="selectedAddressId === address.id">
+          <div class="address-card-header">
+            <h2 class="address-street">{{ address.rue }}</h2>
+            <span class="badge status-success" *ngIf="address.principal">Principal</span>
+          </div>
+
+          <label class="radio-row">
+            <input
+              type="radio"
+              class="radio-input"
+              name="selectedAddress"
+              [value]="address.id"
+              [ngModel]="selectedAddressId"
+              (ngModelChange)="selectedAddressId = +$event"
+            />
+            <span class="radio-label">Use this address</span>
+          </label>
+
+          <div class="address-details muted">
+            <p>{{ address.ville }}, {{ address.codePostal }}</p>
+            <p>{{ address.pays }}</p>
+          </div>
+
+          <div class="address-actions">
+            <button
+              type="button"
+              class="btn btn-secondary btn-sm"
+              *ngIf="!address.principal"
+              (click)="setPrincipal(address)"
+              [disabled]="settingPrincipalId !== null || deletingAddressId !== null"
+            >
+              {{ settingPrincipalId === address.id ? 'Updating...' : 'Set as principal' }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger btn-sm"
+              (click)="deleteAddress(address)"
+              [disabled]="settingPrincipalId !== null || deletingAddressId !== null"
+            >
+              {{ deletingAddressId === address.id ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <div class="checkout-actions card">
+        <div class="checkout-actions-content">
+          <span class="muted" *ngIf="!hasAddresses">Please add an address first.</span>
+          <button type="button" class="btn btn-primary btn-large" (click)="continueToOrder()" [disabled]="placingOrder || !selectedAddressId">
+            {{ placingOrder ? 'Placing order...' : 'Continue to Order' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="address-form-section">
+      <form class="address-form card" #addressForm="ngForm" (ngSubmit)="onSubmit(addressForm)">
+        <h2>Add new address</h2>
+
+        <div class="form-group">
+          <label for="rue" class="label">Street</label>
+          <input id="rue" name="rue" class="input-control" required [(ngModel)]="formModel.rue" />
+          <p class="field-error" *ngIf="addressForm.submitted && addressForm.controls['rue']?.invalid">
+            Street is required.
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label for="ville" class="label">City</label>
+          <input id="ville" name="ville" class="input-control" required [(ngModel)]="formModel.ville" />
+        </div>
+
+        <div class="form-group">
+          <label for="codePostal" class="label">Postal code</label>
+          <input id="codePostal" name="codePostal" class="input-control" required [(ngModel)]="formModel.codePostal" />
+        </div>
+
+        <div class="form-group">
+          <label for="pays" class="label">Country</label>
+          <input id="pays" name="pays" class="input-control" required [(ngModel)]="formModel.pays" />
+        </div>
+
+        <div class="form-group checkbox-row">
+          <label class="checkbox-label">
+            <input type="checkbox" name="principal" class="checkbox-input" [(ngModel)]="formModel.principal" />
+            <span>Make this my principal address</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" [disabled]="submitting">
+          {{ submitting ? 'Adding...' : 'Add address' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
