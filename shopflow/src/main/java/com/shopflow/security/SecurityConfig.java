@@ -34,28 +34,41 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                // Disable CSRF — stateless JWT API does not need CSRF protection
+                // Disable CSRF because the API is stateless and uses JWT tokens
                 .csrf(csrf -> csrf.disable())
-                // Disable frame options for H2 console (uses iframes)
+                // Allow H2 console frames for local demo
                 .headers(headers -> headers.frameOptions(frame -> frame.disable()))
+                // No server-side session is stored; every protected request uses JWT
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Return clean 401 Unauthorized when a protected endpoint is accessed without a valid token
                 .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) ->
                         response.sendError(HttpStatus.UNAUTHORIZED.value(), HttpStatus.UNAUTHORIZED.getReasonPhrase())))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public authentication endpoints
                         .requestMatchers("/api/auth/register", "/api/auth/login").permitAll()
+
+                        // Public seller account request endpoint
                         .requestMatchers(HttpMethod.POST, "/api/seller-requests").permitAll()
-                        // Uploaded files — served publicly
+
+                        // Public catalog endpoints, so visitors can browse products without login
+                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories", "/api/categories/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
+
+                        // Uploaded files/images are served publicly
                         .requestMatchers("/uploads/**").permitAll()
-                        // H2 Console — enabled for local demo only.
+
+                        // H2 console is allowed for local demo
                         .requestMatchers("/h2-console/**").permitAll()
-                        // Springdoc / Swagger UI
+
+                        // Swagger/OpenAPI endpoints
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api-docs/**",
                                 "/v3/api-docs/**"
                         ).permitAll()
+
                         // All other endpoints require authentication
                         .anyRequest().authenticated()
                 )
@@ -72,9 +85,20 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+
+        // Allowed frontend origins: local Angular and deployed Vercel frontend
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:4200",
+                "https://shopflow-deploy.vercel.app"
+        ));
+
+        // Allow all HTTP methods used by the Angular frontend
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+
+        // Allow JWT authorization header and JSON content type
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+
+        // Required when frontend sends Authorization header / credentials
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
